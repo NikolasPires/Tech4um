@@ -1,13 +1,16 @@
 FROM node:20-alpine AS builder
 
 WORKDIR /app
-COPY frontend/package.json frontend/package-lock.json ./frontend/
-COPY frontend/tsconfig.json frontend/vite.config.ts ./frontend/
-COPY frontend/src ./frontend/src
-COPY frontend/public ./frontend/public
 
+COPY frontend/package.json frontend/package-lock.json ./frontend/
 WORKDIR /app/frontend
 RUN npm install
+
+WORKDIR /app
+COPY frontend/ ./frontend/
+
+
+WORKDIR /app/frontend
 RUN npm run build
 
 FROM nginx:stable-alpine
