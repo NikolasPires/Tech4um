@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Box, Card, CardContent, Chip, Grid, Typography, useTheme } from '@mui/material';
 
 export type RoomCardData = {
@@ -13,15 +14,23 @@ export type RoomCardData = {
 
 export default function RoomCard({ room }: { room: RoomCardData }) {
   const theme = useTheme();
+  const navigate = useNavigate();
 
   return (
     <Card
       elevation={0}
+      onClick={() => navigate(`/room/${room.id}`)}
       sx={{
+        cursor: 'pointer',
         backgroundColor: theme.palette.background.paper,
         borderRadius: 1,
         boxShadow: '0px 14px 40px rgba(0, 0, 0, 0.06)',
         minHeight: room.size === 'large' ? 260 : 200,
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: '0px 18px 45px rgba(0, 0, 0, 0.1)',
+        },
       }}
     >
       <CardContent sx={{ p: 3, pb: 1, flexGrow: 1, minHeight: room.size === 'large' ? 260 : 200, }} >
