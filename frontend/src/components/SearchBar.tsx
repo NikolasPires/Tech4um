@@ -26,14 +26,14 @@ export default function SearchBar({ onSearch, placeholder = 'Search', debounceMs
       InputProps={{
         startAdornment: (
           <InputAdornment position="start">
-            <SearchIcon sx={{ color: '#6B7280' }} />
+            <SearchIcon sx={{ color: 'gray.main' }} />
           </InputAdornment>
         ),
       }}
       sx={{
-        backgroundColor: '#FFFFFF',
-        borderRadius: '24px',
-        '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E5E7EB' },
+        backgroundColor: 'background.paper',
+        borderRadius: '12px',
+        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'gray.light' },
       }}
     />
   );

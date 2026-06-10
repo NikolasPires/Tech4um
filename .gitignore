@@ -1,3 +1,57 @@
+# ==========================================
+# Dependências (Geradas automaticamente)
+# ==========================================
 node_modules/
-/frontend/node_modules/
+jspm_packages/
+.pnp
+.pnp.js
+
+# ==========================================
+# Artefatos de Build e Produção
+# ==========================================
+dist/
+build/
+out/
+.next/
+.vuepress/.temp
+.vuepress/.dist
+
+# ==========================================
+# Variáveis de Ambiente e Segredos (CRÍTICO)
+# ==========================================
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+*.pem
+
+# ==========================================
+# Logs de Erro e Execução
+# ==========================================
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==========================================
+# Sistema Operacional e IDEs
+# ==========================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# ==========================================
+# Testes e Cobertura
+# ==========================================
+coverage/
+.nyc_output/

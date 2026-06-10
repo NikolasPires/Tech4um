@@ -17,7 +17,6 @@ import {
   TextField,
   Toolbar,
   Typography,
-  useTheme,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
@@ -25,6 +24,7 @@ import AddIcon from '@mui/icons-material/Add';
 import SearchBar from '../components/SearchBar';
 import RoomCardComponent, { RoomCardData as RoomCardDataType } from '../components/RoomCard';
 import CreateRoomModal from '../components/CreateRoomModal';
+import { ArrowForward, Image } from '@mui/icons-material';
 
 interface RoomCardData {
   id: string;
@@ -110,8 +110,8 @@ function useRoomsQuery() {
 }
 
 const layoutMap: Record<RoomCardData['size'], { xs: number; md: number }> = {
-  large: { xs: 12, md: 7 },
-  medium: { xs: 12, md: 5 },
+  large: { xs: 12, md: 6 },
+  medium: { xs: 12, md: 6 },
   small: { xs: 12, md: 3 },
 };
 
@@ -132,38 +132,40 @@ function DashboardPage() {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#F5F7FA', py: 4 }}>
+    <Box sx={{ minHeight: '100vh', backgroundColor: 'background.default', paddingBottom: 4 }}>
+      <AppBar position="static" color="transparent" elevation={1} sx={{ mb: 4 }}>
+          <Container maxWidth="xl">
+            <Box py={2}>
+              <Toolbar disableGutters sx={{ justifyContent: 'space-between', px: { xs: 0, md: 2 } }}>
+                <Stack direction="row" spacing={1}>
+                  <img src='/Logo.png' alt="Logo" style={{ height: '44px', width: '92px' }} />
+                  <Typography variant="body2" sx={{ color: 'gray.main' }}>
+                    Seu fórum sobre tecnologia!
+                  </Typography>
+                </Stack>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Box textAlign="right">
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                      Lara Alves
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'gray.main' }}>
+                      lara.alves@example.com
+                    </Typography>
+                  </Box>
+                  <Avatar alt="Lara Alves" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=400&amp;q=80" />
+                </Stack>
+              </Toolbar>
+            </Box>
+          </Container>
+                    </AppBar>
       <Container maxWidth="xl">
-        <AppBar position="static" color="transparent" elevation={0} sx={{ mb: 4 }}>
-          <Toolbar disableGutters sx={{ justifyContent: 'space-between', px: { xs: 0, md: 2 } }}>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Typography variant="h6" sx={{ color: '#0B6BCB', fontWeight: 900, textTransform: 'lowercase' }}>
-                tech4um
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#6B7280' }}>
-                Seu fórum sobre tecnologia!
-              </Typography>
-            </Stack>
-
-            <Stack direction="row" spacing={2} alignItems="center">
-              <Box textAlign="right">
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#111827' }}>
-                  Lara Alves
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#6B7280' }}>
-                  lara.alves@example.com
-                </Typography>
-              </Box>
-              <Avatar alt="Lara Alves" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=400&amp;q=80" />
-            </Stack>
-          </Toolbar>
-        </AppBar>
+        
 
         <Box sx={{ mb: 4, px: { xs: 0, md: 1 } }}>
-          <Typography variant="h3" sx={{ fontWeight: 900, mb: 1, color: '#111827' }}>
+          <Typography variant="titleLarge" sx={{ fontWeight: 300, mb: 1, color: 'gray.main', fontFamily: 'Poppins' }}>
             Opa!
           </Typography>
-          <Typography variant="h5" sx={{ fontWeight: 700, color: '#111827' }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'gray.main', fontFamily: 'Poppins' }}>
             Sobre o que gostaria de falar hoje?
           </Typography>
         </Box>
@@ -177,33 +179,33 @@ function DashboardPage() {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: '#6B7280' }} />
+                    <SearchIcon sx={{ color: 'gray.main' }} />
                   </InputAdornment>
                 ),
               }}
               sx={{
-                backgroundColor: '#FFFFFF',
+                backgroundColor: 'background.paper',
                 borderRadius: '24px',
                 '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#E5E7EB',
+                  borderColor: 'gray.light',
                 },
               }}
             />
           </Grid>
           <Grid item xs={12} md={4}>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}sx={{marginLeft: -10}}>
               <Button
-                fullWidth
+                
                 variant="contained"
-                sx={{ minHeight: 56, borderRadius: '20px' }}
-                endIcon={<SearchIcon />}
+                sx={{ minHeight: 56, borderRadius: '20px', bgcolor: 'primary.dark', }}
               >
+                <ArrowForward fontSize="small" />
               </Button>
               <Button
-                fullWidth
                 variant="contained"
                 color="primary"
-                sx={{ minHeight: 56, borderRadius: '20px' }}
+                sx={{ minHeight: 44, borderRadius: '20px', bgcolor: 'primary.dark'}}
+                
               >
                 Ou crie seu próprio 4um
               </Button>
@@ -216,7 +218,7 @@ function DashboardPage() {
             // show skeletons only momentarily; initial data is local so no loading
             skeletonItems.map((_, index) => (
               <Grid item xs={12} md={layoutMap.large.md} key={`skeleton-${index}`}>
-                <Card elevation={0} sx={{ backgroundColor: '#FFFFFF', borderRadius: 1, boxShadow: '0px 14px 40px rgba(15, 23, 42, 0.06)', minHeight: 220 }}>
+                <Card elevation={0} sx={{ backgroundColor: 'background.paper', borderRadius: 1, boxShadow: '0px 14px 40px rgba(0, 0, 0, 0.06)', minHeight: 220 }}>
                   <CardContent sx={{ p: 3 }}>
                     <Stack spacing={2}>
                       <Skeleton width={150} height={24} />
