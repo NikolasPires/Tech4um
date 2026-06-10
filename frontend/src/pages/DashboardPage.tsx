@@ -2,15 +2,12 @@ import { useMemo, useState, useCallback } from 'react';
 import {
   AppBar,
   Avatar,
-  Badge,
   Box,
   Button,
   Card,
   CardContent,
-  Chip,
   Container,
   Grid,
-  IconButton,
   InputAdornment,
   Skeleton,
   Stack,
@@ -19,12 +16,10 @@ import {
   Typography,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import AddIcon from '@mui/icons-material/Add';
+import { ArrowForward } from '@mui/icons-material';
 
-import SearchBar from '../components/SearchBar';
 import RoomCardComponent, { RoomCardData as RoomCardDataType } from '../components/RoomCard';
 import CreateRoomModal from '../components/CreateRoomModal';
-import { ArrowForward, Image } from '@mui/icons-material';
 
 interface RoomCardData {
   id: string;
@@ -42,8 +37,7 @@ const mockRooms: RoomCardData[] = [
     title: 'product-development-stuff',
     creator: 'Lara Alves',
     members: 115,
-    description:
-      'Converse sobre processos, ferramentas e melhorias de produto com a equipe.',
+    description: 'Converse sobre processos, ferramentas e melhorias de produto com a equipe.',
     featured: true,
     size: 'large',
   },
@@ -52,8 +46,7 @@ const mockRooms: RoomCardData[] = [
     title: 'Designers_na_firma',
     creator: 'Lara Alves',
     members: 96,
-    description:
-      'Espaço para discutir fluxo, tipografia e layouts que fazem a diferença.',
+    description: 'Espaço para discutir fluxo, tipografia e layouts que fazem a diferença.',
     featured: true,
     size: 'large',
   },
@@ -105,8 +98,7 @@ const mockRooms: RoomCardData[] = [
 ];
 
 function useRoomsQuery() {
-  // Local stub to return mock data — keeps dashboard working without react-query version/type issues.
-  return { data: mockRooms as RoomCardData[], isLoading: false } as { data: RoomCardData[]; isLoading: boolean };
+  return { data: mockRooms as RoomCardData[], isLoading: false };
 }
 
 const layoutMap: Record<RoomCardData['size'], { xs: number; md: number }> = {
@@ -115,52 +107,47 @@ const layoutMap: Record<RoomCardData['size'], { xs: number; md: number }> = {
   small: { xs: 12, md: 3 },
 };
 
-// Use extracted RoomCard component
-
 function DashboardPage() {
-  const { data: initialRooms } = useRoomsQuery() as { data?: RoomCardData[]; isLoading: boolean };
+  const { data: initialRooms, isLoading } = useRoomsQuery();
   const [rooms, setRooms] = useState<RoomCardData[]>(initialRooms ?? mockRooms);
   const [query, setQuery] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-  const skeletonItems = useMemo<number[]>(() => [1, 2, 3, 4, 5, 6, 7], []);
-
-  const handleSearch = useCallback((value: string) => setQuery(value), []);
+  const skeletonItems = useMemo<number[]>(() => [1, 2, 3, 4], []);
 
   const handleCreate = (room: RoomCardDataType) => {
-    setRooms((s) => [room, ...s]);
+    setRooms((s) => [room as RoomCardData, ...s]);
   };
 
   return (
     <Box sx={{ minHeight: '100vh', backgroundColor: 'background.default', paddingBottom: 4 }}>
       <AppBar position="static" color="transparent" elevation={1} sx={{ mb: 4 }}>
-          <Container maxWidth="xl">
-            <Box py={2}>
-              <Toolbar disableGutters sx={{ justifyContent: 'space-between', px: { xs: 0, md: 2 } }}>
-                <Stack direction="row" spacing={1}>
-                  <img src='/Logo.png' alt="Logo" style={{ height: '44px', width: '92px' }} />
-                  <Typography variant="body2" sx={{ color: 'gray.main' }}>
-                    Seu fórum sobre tecnologia!
+        <Container maxWidth="xl">
+          <Box py={2}>
+            <Toolbar disableGutters sx={{ justifyContent: 'space-between', px: { xs: 0, md: 2 } }}>
+              <Stack direction="row" spacing={1}>
+                <img src="/Logo.png" alt="Logo" style={{ height: '44px', width: '92px' }} />
+                <Typography variant="body2" sx={{ color: 'gray.main' }}>
+                  Seu fórum sobre tecnologia!
+                </Typography>
+              </Stack>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Box textAlign="left">
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                    Lara Alves
                   </Typography>
-                </Stack>
-                <Stack direction="row" spacing={2} alignItems="center">
-                  <Box textAlign="right">
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                      Lara Alves
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'gray.main' }}>
-                      lara.alves@example.com
-                    </Typography>
-                  </Box>
-                  <Avatar alt="Lara Alves" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=400&amp;q=80" />
-                </Stack>
-              </Toolbar>
-            </Box>
-          </Container>
-                    </AppBar>
-      <Container maxWidth="xl">
-        
+                  <Typography variant="body2" sx={{ color: 'gray.main' }}>
+                    lara.alves@example.com
+                  </Typography>
+                </Box>
+                <Avatar alt="Lara Alves" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=400&amp;q=80" />
+              </Stack>
+            </Toolbar>
+          </Box>
+        </Container>
+      </AppBar>
 
+      <Container maxWidth="xl">
         <Box sx={{ mb: 4, px: { xs: 0, md: 1 } }}>
           <Typography variant="titleLarge" sx={{ fontWeight: 300, mb: 1, color: 'gray.main', fontFamily: 'Poppins' }}>
             Opa!
@@ -176,6 +163,8 @@ function DashboardPage() {
               fullWidth
               placeholder="Em busca de uma sala? Encontre-a aqui 🔎"
               variant="outlined"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -193,19 +182,18 @@ function DashboardPage() {
             />
           </Grid>
           <Grid item xs={12} md={4}>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}sx={{marginLeft: -10}}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ marginLeft: { xs: 0, md: -10 } }}>
               <Button
-                
                 variant="contained"
-                sx={{ minHeight: 56, borderRadius: '20px', bgcolor: 'primary.dark', }}
+                sx={{ minHeight: 56, borderRadius: '20px', bgcolor: 'primary.dark' }}
               >
                 <ArrowForward fontSize="small" />
               </Button>
               <Button
                 variant="contained"
                 color="primary"
-                sx={{ minHeight: 44, borderRadius: '20px', bgcolor: 'primary.dark'}}
-                
+                onClick={() => setIsCreateOpen(true)}
+                sx={{ minHeight: 44, borderRadius: '20px', bgcolor: 'primary.dark' }}
               >
                 Ou crie seu próprio 4um
               </Button>
@@ -214,8 +202,7 @@ function DashboardPage() {
         </Grid>
 
         <Grid container spacing={3}>
-          {skeletonItems && (
-            // show skeletons only momentarily; initial data is local so no loading
+          {isLoading &&
             skeletonItems.map((_, index) => (
               <Grid item xs={12} md={layoutMap.large.md} key={`skeleton-${index}`}>
                 <Card elevation={0} sx={{ backgroundColor: 'background.paper', borderRadius: 1, boxShadow: '0px 14px 40px rgba(0, 0, 0, 0.06)', minHeight: 220 }}>
@@ -229,17 +216,16 @@ function DashboardPage() {
                   </CardContent>
                 </Card>
               </Grid>
-            ))
-          )}
+            ))}
 
-          {(rooms ?? [])
+          {!isLoading && (rooms ?? [])
             .filter((r) => {
               if (!query) return true;
               const q = query.toLowerCase();
               return r.title.toLowerCase().includes(q) || r.description.toLowerCase().includes(q) || r.creator.toLowerCase().includes(q);
             })
             .map((room) => {
-              const { xs, md } = layoutMap[room.size];
+              const { md } = layoutMap[room.size];
 
               return (
                 <Grid item xs={12} md={md} key={room.id}>

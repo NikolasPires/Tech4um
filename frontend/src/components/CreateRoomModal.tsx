@@ -54,7 +54,6 @@ export default function CreateRoomModal({ open, onClose, onCreate }: Props) {
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <TextField label="Título" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth />
-          <TextField label="Criador" value={creator} onChange={(e) => setCreator(e.target.value)} fullWidth />
           <TextField label="Descrição" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline minRows={3} />
           <TextField select label="Tamanho" value={size} onChange={(e) => setSize(e.target.value as any)}>
             <MenuItem value="large">Large</MenuItem>
@@ -65,8 +64,10 @@ export default function CreateRoomModal({ open, onClose, onCreate }: Props) {
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
-        <Button variant="contained" onClick={handleCreate}>Criar</Button>
+        <Button onClick={onClose} >Cancelar</Button>
+        <Button variant="contained" onClick={handleCreate} sx={{ bgcolor: 'primary.dark' }}>
+          Criar
+        </Button>
       </DialogActions>
     </Dialog>
   );
