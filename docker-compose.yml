@@ -27,9 +27,11 @@ services:
       - '3000:3000' # Frontend/Next/Vite
     depends_on:
       - db
+    env_file:
+      - ./backend/.env
     environment:
       - PYTHONUNBUFFERED=1
-      - DATABASE_URL=postgresql+psycopg2://tech4um:changeme@db:5432/tech4um
+      - DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/tech4um
       - SECRET_KEY=change-this-secret-key
       - ACCESS_TOKEN_EXPIRE_MINUTES=60
 
