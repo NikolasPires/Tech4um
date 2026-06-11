@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: tech4um-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tech4um
+    ports:
+      - '5432:5432'
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  # Serviço Unificado para Dev Container
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tech4um-app
+    command: sh -c "tail -f /dev/null" # Mantém vivo para ligar os servidores manualmente no terminal se quiser
+    volumes:
+      - .:/app:cached
+    ports:
+      - '8000:8000' # FastAPI/Uvicorn Backend
+      - '3000:3000' # Frontend/Next/Vite
+    depends_on:
+      - db
+    env_file:
+      - ./backend/.env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/tech4um
+      - SECRET_KEY=change-this-secret-key
+      - ACCESS_TOKEN_EXPIRE_MINUTES=60
+
+volumes:
+  db_data:

@@ -1,0 +1,48 @@
+{
+	"name": "Tech4um Workspace",
+	"dockerComposeFile": "../docker-compose.yml",
+	"service": "app",
+	"workspaceFolder": "/app",
+	
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"search.exclude": {
+					"**/node_modules/*": true,
+					"**/.venv/*": true,
+					"**/vendor/*": true
+				},
+				"editor.formatOnSave": true,
+				"workbench.editor.highlightModifiedTabs": true,
+				"workbench.editor.wrapTabs": true
+			},
+			"extensions": [
+				"ms-vscode-remote.remote-containers",
+				"ms-python.python",
+				"ms-python.debugpy",
+				"dbaeumer.vscode-eslint",
+				"ms-azuretools.vscode-docker",
+				"esbenp.prettier-vscode"
+			]
+		}
+	},
+	"forwardPorts": [
+		3000,
+		5432,
+		8000
+	],
+	"portsAttributes": {
+		"3000": {
+			"label": "Frontend App",
+			"onAutoForward": "notify"
+		},
+		"5432": {
+			"label": "Postgres Database",
+			"onAutoForward": "notify"
+		},
+		"8000": {
+			"label": "Uvicorn Backend",
+			"onAutoForward": "notify"
+		}
+	}
+}

@@ -15,7 +15,9 @@ out/
 .next/
 .vuepress/.temp
 .vuepress/.dist
-
+__pycache__/
+*.py[cod]
+*$py.class
 # ==========================================
 # Variáveis de Ambiente e Segredos (CRÍTICO)
 # ==========================================
@@ -49,7 +51,8 @@ Thumbs.db
 *.njsproj
 *.sln
 *.swp
-
+.dockercontainer/
+.docker/
 # ==========================================
 # Testes e Cobertura
 # ==========================================

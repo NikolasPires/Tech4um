@@ -55,9 +55,8 @@ export default function CreateRoomModal({ open, onClose, onCreate }: Props) {
         <Stack spacing={2} sx={{ mt: 1 }}>
           <TextField label="Título" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth />
           <TextField label="Descrição" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline minRows={3} />
-          <TextField select label="Tamanho" value={size} onChange={(e) => setSize(e.target.value as any)}>
+          <TextField select label="Tamanho" value={size} onChange={(e) => setSize(e.target.value as RoomCardData['size'])}>
             <MenuItem value="large">Large</MenuItem>
-            <MenuItem value="medium">Medium</MenuItem>
             <MenuItem value="small">Small</MenuItem>
           </TextField>
           <FormControlLabel control={<Switch checked={featured} onChange={(e) => setFeatured(e.target.checked)} />} label="Em destaque" />

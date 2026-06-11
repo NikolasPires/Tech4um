@@ -1,0 +1,27 @@
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.repositories.chat_repository import ChatRepository
+from app.schemas.chat import MessageCreate, RoomCreate
+
+
+class ChatController:
+    def __init__(self, db: AsyncSession):
+        self.repository = ChatRepository(db)
+
+    async def create_room(self, room_create: RoomCreate, created_by: int):
+        return await self.repository.create_room(room_create, created_by)
+
+    async def add_participant(self, room_id: int, user_id: int):
+        return await self.repository.add_participant(room_id, user_id)
+
+    async def create_message(self, message_create: MessageCreate, sender_id: int):
+        return await self.repository.create_message(message_create, sender_id)
+
+    async def get_room_messages(self, room_id: int, current_user_id: int, limit: int = 20, offset: int = 0):
+        return await self.repository.get_room_messages(room_id, current_user_id, limit=limit, offset=offset)
+
+    async def get_room(self, room_id: int):
+        return await self.repository.get_room_by_id(room_id)
+
+    async def list_rooms(self, limit: int = 20, offset: int = 0):
+        return await self.repository.list_rooms(limit=limit, offset=offset)

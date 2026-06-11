@@ -9,7 +9,7 @@ export type RoomCardData = {
   members: number;
   description: string;
   featured: boolean;
-  size: 'large' | 'medium' | 'small';
+  size: 'large' | 'small';
 };
 
 export default function RoomCard({ room }: { room: RoomCardData }) {
@@ -25,7 +25,7 @@ export default function RoomCard({ room }: { room: RoomCardData }) {
         backgroundColor: theme.palette.background.paper,
         borderRadius: 1,
         boxShadow: '0px 14px 40px rgba(0, 0, 0, 0.06)',
-        minHeight: room.size === 'large' ? 260 : 200,
+        minHeight: room.size === 'large' ? 260 : 180,
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
         '&:hover': {
           transform: 'translateY(-2px)',
@@ -33,15 +33,54 @@ export default function RoomCard({ room }: { room: RoomCardData }) {
         },
       }}
     >
-      <CardContent sx={{ p: 3, pb: 1, flexGrow: 1, minHeight: room.size === 'large' ? 260 : 200, }} >
-        <Grid container direction="column" spacing={1} justifyContent="space-between" sx={{minHeight: room.size === 'large' ? 260 : 200,}}>
+      <CardContent
+        sx={{
+          p: room.size === 'large' ? 3 : 2.5,
+          pb: 1,
+          flexGrow: 1,
+          minHeight: room.size === 'large' ? 260 : 180,
+        }}
+      >
+        <Grid
+          container
+          direction="column"
+          spacing={1}
+          justifyContent="space-between"
+          sx={{ minHeight: room.size === 'large' ? 260 : 180 }}
+        >
           <Grid item>
             {room.featured && (
-              <Typography variant="caption" sx={{ color: theme.palette.warning.main, fontWeight: 700, mb: 1, display: 'block', fontStyle: 'italic', fontSize: 16 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: theme.palette.warning.main,
+                  fontWeight: 700,
+                  mb: 1,
+                  display: 'block',
+                  fontStyle: 'italic',
+                  fontSize: 16,
+                }}
+              >
                 Tópico em destaque!
               </Typography>
             )}
-            <Typography variant="labelLarge" sx={{ color: 'primary.dark', fontWeight: 700, mb: 1.5, wordBreak: 'break-word', fontSize: 28 }}>
+            <Typography
+              variant="labelLarge"
+              sx={{
+                color: 'primary.dark',
+                fontWeight: 700,
+                mb: 1.5,
+                fontSize: 28,
+                ...(room.size === 'small'
+                  ? {
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      maxWidth: '185px',
+                    }
+                  : { wordBreak: 'break-word' }),
+              }}
+            >
               {room.title}
             </Typography>
           </Grid>
@@ -52,26 +91,25 @@ export default function RoomCard({ room }: { room: RoomCardData }) {
               </Typography>
             </Grid>
           )}
-          <Grid item direction="row" alignItems="center" sx={{display: 'flex', justifyContent: 'space-between', p: 0 }}>
-            <Typography sx={{ color: theme.palette.text.secondary, mb: 2 }}>
+          <Grid item sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 0 }}>
+            <Typography sx={{ color: theme.palette.text.secondary, mb: 2, fontSize: 14 }}>
               Criado por: <strong>{room.creator}</strong>
             </Typography>
-            <Box sx={{ p: 3, pt: 0, }}>
-            <Chip
-              label={`+${room.members}`}
-              clickable={false}
-              sx={{
-                height: 35,
-                borderRadius: '40%',
-                minWidth: 41,
-                padding: '20px',
-                px: 0,
-                fontWeight: 700,
-                backgroundColor: theme.palette.primary.dark,
-                color: theme.palette.primary.contrastText,
-              }}
-            />
-          </Box>
+            <Box sx={{ p: 0 }}>
+              <Chip
+                label={`+${room.members}`}
+                clickable={false}
+                sx={{
+                  height: 35,
+                  borderRadius: '40%',
+                  minWidth: 41,
+                  px: 1.5,
+                  fontWeight: 700,
+                  backgroundColor: theme.palette.primary.dark,
+                  color: theme.palette.primary.contrastText,
+                }}
+              />
+            </Box>
           </Grid>
         </Grid>
       </CardContent>
