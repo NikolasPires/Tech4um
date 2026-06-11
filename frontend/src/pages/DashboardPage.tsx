@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState } from 'react';
 import {
   AppBar,
   Avatar,
@@ -20,103 +20,25 @@ import { ArrowForward } from '@mui/icons-material';
 
 import RoomCardComponent, { RoomCardData as RoomCardDataType } from '../components/RoomCard';
 import CreateRoomModal from '../components/CreateRoomModal';
+import { useAuth } from '../hooks/useAuth';
+import { useRoomsGet, useRoomsPost } from '../hooks/useRooms';
 
-interface RoomCardData {
-  id: string;
-  title: string;
-  creator: string;
-  members: number;
-  description: string;
-  featured: boolean;
-  size: 'large' | 'medium' | 'small';
-}
-
-const mockRooms: RoomCardData[] = [
-  {
-    id: 'product-development-stuff',
-    title: 'product-development-stuff',
-    creator: 'Lara Alves',
-    members: 115,
-    description: 'Converse sobre processos, ferramentas e melhorias de produto com a equipe.',
-    featured: true,
-    size: 'large',
-  },
-  {
-    id: 'Designers_na_firma',
-    title: 'Designers_na_firma',
-    creator: 'Lara Alves',
-    members: 96,
-    description: 'Espaço para discutir fluxo, tipografia e layouts que fazem a diferença.',
-    featured: true,
-    size: 'large',
-  },
-  {
-    id: 'gente-maneira-discutindo-tema-maneiro',
-    title: 'gente-maneira-discutindo-tema-maneiro',
-    creator: 'Caio Santos',
-    members: 115,
-    description: 'Debate rápido sobre tecnologias, memes de dev e boas práticas.',
-    featured: false,
-    size: 'medium',
-  },
-  {
-    id: 'Thinking about...',
-    title: 'Thinking about...',
-    creator: 'Ana Beatriz',
-    members: 28,
-    description: 'Ideas e insights rápidos.',
-    featured: false,
-    size: 'small',
-  },
-  {
-    id: '#segurança',
-    title: '#segurança',
-    creator: 'Ricardo',
-    members: 54,
-    description: 'Discussões sobre cibersegurança e melhores práticas.',
-    featured: false,
-    size: 'small',
-  },
-  {
-    id: 'gamegamegame!',
-    title: 'gamegamegame!',
-    creator: 'Bianca',
-    members: 32,
-    description: 'Jogos, devs e conversas leves.',
-    featured: false,
-    size: 'small',
-  },
-  {
-    id: 'E as férias?...',
-    title: 'E as férias?...',
-    creator: 'Marina',
-    members: 18,
-    description: 'Planos, recomendações e histórias de viagens.',
-    featured: false,
-    size: 'small',
-  },
-];
-
-function useRoomsQuery() {
-  return { data: mockRooms as RoomCardData[], isLoading: false };
-}
-
-const layoutMap: Record<RoomCardData['size'], { xs: number; md: number }> = {
+const layoutMap = {
   large: { xs: 12, md: 6 },
-  medium: { xs: 12, md: 6 },
   small: { xs: 12, md: 3 },
 };
 
 function DashboardPage() {
-  const { data: initialRooms, isLoading } = useRoomsQuery();
-  const [rooms, setRooms] = useState<RoomCardData[]>(initialRooms ?? mockRooms);
+  const { user } = useAuth();
+  const { data: rooms = [], isLoading } = useRoomsGet();
+  const createRoomMutation = useRoomsPost();
   const [query, setQuery] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const skeletonItems = useMemo<number[]>(() => [1, 2, 3, 4], []);
 
   const handleCreate = (room: RoomCardDataType) => {
-    setRooms((s) => [room as RoomCardData, ...s]);
+    createRoomMutation.mutate(room);
   };
 
   return (
@@ -134,13 +56,13 @@ function DashboardPage() {
               <Stack direction="row" spacing={2} alignItems="center">
                 <Box textAlign="left">
                   <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                    Lara Alves
+                    {user.name}
                   </Typography>
                   <Typography variant="body2" sx={{ color: 'gray.main' }}>
-                    lara.alves@example.com
+                    {user.email}
                   </Typography>
                 </Box>
-                <Avatar alt="Lara Alves" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&amp;auto=format&amp;fit=crop&amp;w=400&amp;q=80" />
+                <Avatar alt={user.name} src={user.avatar} />
               </Stack>
             </Toolbar>
           </Box>
@@ -205,7 +127,15 @@ function DashboardPage() {
           {isLoading &&
             skeletonItems.map((_, index) => (
               <Grid item xs={12} md={layoutMap.large.md} key={`skeleton-${index}`}>
-                <Card elevation={0} sx={{ backgroundColor: 'background.paper', borderRadius: 1, boxShadow: '0px 14px 40px rgba(0, 0, 0, 0.06)', minHeight: 220 }}>
+                <Card
+                  elevation={0}
+                  sx={{
+                    backgroundColor: 'background.paper',
+                    borderRadius: 1,
+                    boxShadow: '0px 14px 40px rgba(0, 0, 0, 0.06)',
+                    minHeight: 220,
+                  }}
+                >
                   <CardContent sx={{ p: 3 }}>
                     <Stack spacing={2}>
                       <Skeleton width={150} height={24} />
@@ -218,11 +148,15 @@ function DashboardPage() {
               </Grid>
             ))}
 
-          {!isLoading && (rooms ?? [])
+          {!isLoading && rooms
             .filter((r) => {
               if (!query) return true;
               const q = query.toLowerCase();
-              return r.title.toLowerCase().includes(q) || r.description.toLowerCase().includes(q) || r.creator.toLowerCase().includes(q);
+              return (
+                r.title.toLowerCase().includes(q) ||
+                r.description.toLowerCase().includes(q) ||
+                r.creator.toLowerCase().includes(q)
+              );
             })
             .map((room) => {
               const { md } = layoutMap[room.size];

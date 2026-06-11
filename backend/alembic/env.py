@@ -7,7 +7,7 @@ from alembic import context
 
 from app.core.config import DATABASE_URL
 from app.core.database import Base
-from app.models import user  # noqa: F401
+from app.models import user, room, participant, room_message  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", DATABASE_URL)

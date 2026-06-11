@@ -7,4 +7,6 @@ python-jose[cryptography]
 python-multipart
 psycopg2-binary
 python-dotenv
-pydantic[email]
+pydantic[email]>=2.0,<3.0
+asyncpg
+aiosqlite
