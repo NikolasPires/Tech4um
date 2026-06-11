@@ -5,8 +5,8 @@ services:
     image: postgres:16
     container_name: tech4um-db
     environment:
-      POSTGRES_USER: tech4um
-      POSTGRES_PASSWORD: changeme
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: tech4um
     ports:
       - '5432:5432'
