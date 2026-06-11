@@ -7,11 +7,10 @@ import {
   Button,
   TextField,
   Stack,
-  FormControlLabel,
-  Switch,
-  MenuItem,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
-import { RoomCardData } from './RoomCard';
+import type { RoomCardData } from './RoomCard';
 
 type Props = {
   open: boolean;
@@ -21,51 +20,89 @@ type Props = {
 
 export default function CreateRoomModal({ open, onClose, onCreate }: Props) {
   const [title, setTitle] = useState('');
-  const [creator, setCreator] = useState('');
   const [description, setDescription] = useState('');
-  const [size, setSize] = useState<RoomCardData['size']>('small');
-  const [featured, setFeatured] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function handleCreate() {
-    if (!title.trim() || !creator.trim()) return;
+    if (!title.trim()) {
+      setError('Nome da sala é obrigatório');
+      return;
+    }
 
-    const room: RoomCardData = {
-      id: `${title.trim().toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+    setError(null);
+    setIsLoading(true);
+
+    // Simular um objeto RoomCardData para passar ao hook
+    // O hook vai fazer o POST real
+    const roomData: RoomCardData = {
+      id: '',
       title: title.trim(),
-      creator: creator.trim(),
-      members: 1,
+      createdBy: 0,
+      members: 0,
       description: description.trim(),
-      featured,
-      size,
+      featured: false,
+      size: 'large',
     };
 
-    onCreate(room);
-    setTitle('');
-    setCreator('');
-    setDescription('');
-    setSize('small');
-    setFeatured(false);
-    onClose();
+    // Chamar onCreate que dispara o mutate do useRoomsPost
+    try {
+      onCreate(roomData);
+      setTitle('');
+      setDescription('');
+      setIsLoading(false);
+      onClose();
+    } catch (err) {
+      setError('Erro ao criar sala');
+      setIsLoading(false);
+    }
   }
 
+  const handleClose = () => {
+    setError(null);
+    setTitle('');
+    setDescription('');
+    setIsLoading(false);
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Criar 4um</DialogTitle>
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+      <DialogTitle sx={{ fontWeight: 700 }}>Criar 4um</DialogTitle>
       <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
-          <TextField label="Título" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth />
-          <TextField label="Descrição" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline minRows={3} />
-          <TextField select label="Tamanho" value={size} onChange={(e) => setSize(e.target.value as RoomCardData['size'])}>
-            <MenuItem value="large">Large</MenuItem>
-            <MenuItem value="small">Small</MenuItem>
-          </TextField>
-          <FormControlLabel control={<Switch checked={featured} onChange={(e) => setFeatured(e.target.checked)} />} label="Em destaque" />
+        {error && (
+          <Alert severity="error" sx={{ mb: 2, mt: 2 }}>
+            {error}
+          </Alert>
+        )}
+        <Stack spacing={2} sx={{ mt: error ? 1 : 2 }}>
+          <TextField
+            label="Nome da sala"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            fullWidth
+            required
+            disabled={isLoading}
+            placeholder="Ex: React Lovers"
+          />
+          <TextField
+            label="Descrição"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            fullWidth
+            multiline
+            minRows={3}
+            disabled={isLoading}
+            placeholder="Descreva o tema principal da sua sala..."
+          />
         </Stack>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} >Cancelar</Button>
-        <Button variant="contained" onClick={handleCreate} sx={{ bgcolor: 'primary.dark' }}>
-          Criar
+      <DialogActions sx={{ gap: 1 }}>
+        <Button onClick={handleClose} disabled={isLoading}>
+          Cancelar
+        </Button>
+        <Button variant="contained" onClick={handleCreate} sx={{ bgcolor: 'primary.dark' }} disabled={isLoading}>
+          {isLoading ? <CircularProgress size={24} /> : 'Criar'}
         </Button>
       </DialogActions>
     </Dialog>

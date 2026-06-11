@@ -16,7 +16,21 @@ def register_user(user_create: UserCreate, db: Session = Depends(get_db)):
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
-
 @router.get("/me", response_model=UserRead)
 def read_current_user(current_user=Depends(get_current_user)):
     return current_user
+
+@router.get("", response_model=list[UserRead])
+def list_users(db: Session = Depends(get_db)):
+    return UserController(db).list_users()
+
+
+@router.get("/{user_id}", response_model=UserRead)
+def read_user(user_id: int, db: Session = Depends(get_db)):
+    user = UserController(db).get_user_by_id(user_id)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return user
+
+
+

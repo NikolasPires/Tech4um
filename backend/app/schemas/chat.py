@@ -34,6 +34,19 @@ class ParticipantResponse(BaseModel):
     }
 
 
+class RoomParticipantResponse(BaseModel):
+    user_id: int
+    room_id: int
+    name: str
+    username: str
+    email: str
+    is_creator: bool
+
+    model_config = {
+        "from_attributes": True,
+    }
+
+
 class MessageCreate(BaseModel):
     room_id: int
     message: str = Field(..., min_length=1)

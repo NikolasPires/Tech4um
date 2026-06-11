@@ -5,7 +5,8 @@ import { Box, Card, CardContent, Chip, Grid, Typography, useTheme } from '@mui/m
 export type RoomCardData = {
   id: string;
   title: string;
-  creator: string;
+  createdBy: number;
+  creator?: string;
   members: number;
   description: string;
   featured: boolean;

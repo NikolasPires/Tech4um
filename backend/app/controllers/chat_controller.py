@@ -23,5 +23,23 @@ class ChatController:
     async def get_room(self, room_id: int):
         return await self.repository.get_room_by_id(room_id)
 
+    async def list_room_participants(self, room_id: int):
+        room = await self.repository.get_room_by_id(room_id)
+        if room is None:
+            raise ValueError('Room not found')
+
+        participants = await self.repository.list_room_participants(room_id)
+        return [
+            {
+                'user_id': participant.user_id,
+                'room_id': participant.room_id,
+                'name': participant.user.name,
+                'username': participant.user.username,
+                'email': participant.user.email,
+                'is_creator': participant.user_id == room.created_by,
+            }
+            for participant in participants
+        ]
+
     async def list_rooms(self, limit: int = 20, offset: int = 0):
         return await self.repository.list_rooms(limit=limit, offset=offset)

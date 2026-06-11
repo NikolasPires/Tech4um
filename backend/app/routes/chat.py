@@ -3,7 +3,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_async_db, get_current_user
 from app.controllers.chat_controller import ChatController
-from app.schemas.chat import MessageCreate, MessageResponse, ParticipantCreate, ParticipantResponse, RoomCreate, RoomResponse
+from app.schemas.chat import (
+    MessageCreate,
+    MessageResponse,
+    ParticipantCreate,
+    ParticipantResponse,
+    RoomCreate,
+    RoomParticipantResponse,
+    RoomResponse,
+)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -15,6 +23,8 @@ async def create_room(
     current_user=Depends(get_current_user),
 ):
     room = await ChatController(db).create_room(room_create, current_user.id)
+    if room:
+        await ChatController(db).add_participant(room.id, current_user.id)
     return room
 
 
@@ -25,6 +35,23 @@ async def list_rooms(
     db: AsyncSession = Depends(get_async_db),
 ):
     return await ChatController(db).list_rooms(limit=limit, offset=offset)
+
+
+@router.get("/rooms/{room_id}", response_model=RoomResponse)
+async def get_room(room_id: int, db: AsyncSession = Depends(get_async_db)):
+    room = await ChatController(db).get_room(room_id)
+    if room is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Room not found")
+    return room
+
+
+@router.get("/rooms/{room_id}/participants", response_model=list[RoomParticipantResponse])
+async def list_room_participants(
+    room_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user=Depends(get_current_user),
+):
+    return await ChatController(db).list_room_participants(room_id)
 
 
 @router.post("/rooms/{room_id}/participants", response_model=ParticipantResponse, status_code=status.HTTP_201_CREATED)

@@ -3,7 +3,7 @@ import type { RoomCardData } from '../components/RoomCard';
 
 const roomsQueryKey = ['rooms'];
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
+const API_BASE_URL = ((import.meta as any).env.VITE_API_BASE_URL as string | undefined) ?? '';
 
 type BackendRoom = {
   id: number;
@@ -27,7 +27,7 @@ const computeRoomSize = (room: Pick<RoomCardData, 'title' | 'description'>) => {
 const mapRoomFromBackend = (room: BackendRoom): RoomCardData => ({
   id: String(room.id),
   title: room.name,
-  creator: `Usuário ${room.created_by}`,
+  createdBy: room.created_by,
   members: 0,
   description: room.description ?? '',
   featured: new Date(room.created_at).getTime() >= Date.now() - 24 * 60 * 60 * 1000,
@@ -56,21 +56,36 @@ export function useRoomsGet() {
   });
 }
 
-export type CreateRoomPayload = Omit<RoomCardData, 'size' | 'featured'> & {
-  featured?: boolean;
-};
-
 export function useRoomsPost() {
   const queryClient = useQueryClient();
 
-  return useMutation<RoomCardData, unknown, CreateRoomPayload>({
-    mutationFn: async (newRoom) => {
-      const room: RoomCardData = {
-        ...newRoom,
-        featured: newRoom.featured ?? false,
-        size: computeRoomSize(newRoom),
+  return useMutation<RoomCardData, unknown, RoomCardData>({
+    mutationFn: async (roomData) => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
+      const payload = {
+        name: roomData.title,
+        description: roomData.description,
       };
-      return room;
+
+      const response = await fetch(getRoomsUrl(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create room');
+      }
+
+      const data = (await response.json()) as BackendRoom;
+      return mapRoomFromBackend(data);
     },
     onSuccess: (room) => {
       queryClient.setQueryData<RoomCardData[]>(roomsQueryKey, (currentRooms) => [room, ...(currentRooms ?? [])]);

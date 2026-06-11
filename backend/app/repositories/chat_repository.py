@@ -2,10 +2,12 @@ from typing import List
 
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.participant import Participant
 from app.models.room import Room
 from app.models.room_message import RoomMessage
+from app.models.user import User
 from app.schemas.chat import MessageCreate, RoomCreate
 
 
@@ -30,6 +32,14 @@ class ChatRepository:
     async def list_rooms(self, limit: int = 20, offset: int = 0) -> List[Room]:
         result = await self.db.execute(
             select(Room).order_by(Room.created_at.desc()).limit(limit).offset(offset)
+        )
+        return result.scalars().all()
+
+    async def list_room_participants(self, room_id: int) -> List[Participant]:
+        result = await self.db.execute(
+            select(Participant)
+            .options(selectinload(Participant.user))
+            .filter_by(room_id=room_id)
         )
         return result.scalars().all()
 

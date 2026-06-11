@@ -17,3 +17,9 @@ class UserController:
 
         password_hash = get_password_hash(user_create.password)
         return self.repository.create(user_create, password_hash)
+
+    def get_user_by_id(self, user_id: int):
+        return self.repository.get_by_id(user_id)
+
+    def list_users(self):
+        return self.repository.list_users()
