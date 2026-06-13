@@ -18,7 +18,7 @@ import {
   RoomChatPanel,
   RoomSidebar,
 } from '../components/Room';
-
+import { useRoomSocket } from '../hooks/useRoomSocket';
 const getPlaceholderAvatar = (name: string) =>
   `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff&length=2`;
 
@@ -32,11 +32,59 @@ export default function RoomPage() {
   const { data: room } = useRoom(roomId);
   const { data: participants = [] } = useRoomParticipants(roomId);
   const { data: messages = [] } = useRoomMessages(roomId);
-  const createMessageMutation = useCreateRoomMessage();
-
+  const {
+    connected,
+    messages: socketMessages,
+    sendMessage,
+  } = useRoomSocket(
+    roomId,
+    user?.id ?? 0,
+  );
+  const [liveMessages, setLiveMessages] = useState(messages);
   const [draft, setDraft] = useState('');
   const [privateRecipient, setPrivateRecipient] = useState<string | null>(null);
   const [isPrivateMode, setIsPrivateMode] = useState(true);
+
+  useEffect(() => {
+  setLiveMessages(messages);
+}, [messages]);
+useEffect(() => {
+  const latest =
+  socketMessages.length > 0
+    ? socketMessages[socketMessages.length - 1]
+    : undefined;
+
+  if (!latest) return;
+
+  if (latest.event !== 'new_message') return;
+
+  console.log('New message received via WebSocket:', latest);
+  setLiveMessages((current) => {
+    const alreadyExists = current.some(
+      (message) => message.id === latest.id,
+    );
+
+    if (alreadyExists) {
+      return current;
+    }
+
+    return [
+      ...current,
+      {
+        id: latest.id!,
+        room_id: latest.room_id!,
+        user_id: latest.user_id!,
+        recipient_id: latest.recipient_id ?? null,
+        message: latest.message ?? '',
+        image_url: null,
+        message_metadata: null,
+        created_at: latest.created_at ?? new Date().toISOString(),
+        author_name: '',
+        recipient_name: null,
+      },
+    ];
+  });
+}, [socketMessages]);
 
   const participantList = useMemo(
   () =>
@@ -73,7 +121,7 @@ export default function RoomPage() {
 
   const mappedMessages = useMemo<Message[]>(
     () =>
-      messages.map((message) => {
+      liveMessages.map((message) => {
         const author =
           message.user_id === user?.id
             ? user.name
@@ -95,7 +143,7 @@ export default function RoomPage() {
           self: message.user_id === user?.id,
         };
       }),
-    [messages, participants, user],
+    [liveMessages, participants, user]
   );
 
   const visibleMessages = useMemo(
@@ -110,20 +158,20 @@ export default function RoomPage() {
   const selectedRecipient = participantList.find((participant) => participant.name === privateRecipient) ?? null;
 
   const handleSend = () => {
-    if (!draft.trim() || Number.isNaN(roomId)) return;
+    if (!draft.trim()) return;
 
-    const recipient = participantList.find((participant) => participant.name === privateRecipient);
-
-    createMessageMutation.mutate(
-      {
-        roomId,
-        message: draft.trim(),
-        recipientId: isPrivateMode && recipient ? recipient.user_id : undefined,
-      },
-      {
-        onSuccess: () => setDraft(''),
-      },
+    const recipient = participantList.find(
+      (participant) => participant.name === privateRecipient,
     );
+
+    sendMessage({
+      message: draft.trim(),
+      recipient_id: isPrivateMode && recipient
+        ? recipient.user_id
+        : null,
+    });
+
+    setDraft('');
   };
 
   const handleCancelPrivate = () => {
@@ -174,7 +222,7 @@ export default function RoomPage() {
               currentUser={user?.name ?? 'Você'}
               currentRoom={currentRoom}
               visibleMessages={visibleMessages}
-              typingUser={createMessageMutation.isPending ? 'Enviando...' : null}
+              typingUser={!connected ? 'Conectando...' : null}
               draft={draft}
               onDraftChange={setDraft}
               onSend={handleSend}

@@ -1,0 +1,101 @@
+// hooks/useRoomSocket.ts
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+const API_BASE_URL = ((import.meta as any).env.VITE_API_BASE_URL as string | undefined) ?? '';
+
+export type SocketMessage = {
+  event: 'new_message' | 'user_joined' | 'user_left';
+  id?: number;
+  room_id?: number;
+  sender_id?: number;
+  recipient_id?: number | null;
+  user_id?: number;
+  username?: string;
+  message?: string;
+  created_at?: string;
+};
+
+type SendMessagePayload = {
+  message: string;
+  recipient_id?: number | null;
+};
+
+export function useRoomSocket(
+  roomId: number,
+  userId?: number,
+) {
+  const socketRef = useRef<WebSocket | null>(null);
+
+  const [connected, setConnected] = useState(false);
+
+  const [messages, setMessages] = useState<SocketMessage[]>([]);
+
+  const connect = useCallback(() => {
+    const wsUrl = API_BASE_URL
+      .replace('http://', 'ws://')
+      .replace('https://', 'wss://');
+
+    const socket = new WebSocket(
+      `${wsUrl}/chat/ws/rooms/${roomId}?user_id=${userId}`,
+    );
+
+    socket.onopen = () => {
+      setConnected(true);
+    };
+
+    socket.onclose = () => {
+      setConnected(false);
+    };
+
+    socket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    socket.onmessage = (event) => {
+      const data: SocketMessage = JSON.parse(event.data);
+
+      setMessages((current) => [...current, data]);
+    };
+
+    socketRef.current = socket;
+  }, [roomId, userId]);
+
+  const disconnect = useCallback(() => {
+    socketRef.current?.close();
+    socketRef.current = null;
+  }, []);
+
+  const sendMessage = useCallback(
+    (payload: SendMessagePayload) => {
+      if (!socketRef.current) return;
+
+      if (socketRef.current.readyState !== WebSocket.OPEN) return;
+
+      socketRef.current.send(
+        JSON.stringify({
+          message: payload.message,
+          recipient_id: payload.recipient_id ?? null,
+        }),
+      );
+    },
+    [],
+  );
+
+  useEffect(() => {
+  if (!roomId || !userId) return;
+
+  connect();
+
+  return () => {
+    disconnect();
+  };
+}, [roomId, userId, connect, disconnect]);
+
+  return {
+    connected,
+    messages,
+    sendMessage,
+    disconnect,
+  };
+}

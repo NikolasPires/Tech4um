@@ -16,6 +16,7 @@ export type Message = {
 };
 
 export type Participant = {
+  user_id: number;
   name: string;
   role: string;
   avatar: string;
@@ -110,6 +111,7 @@ export function RoomChatPanel({
   selectedRecipient,
   onCancelPrivate,
 }: RoomChatPanelProps) {
+  console.log(visibleMessages);
   return (
     <Card elevation={0} sx={{ borderRadius: '16px', boxShadow: '0px 14px 40px rgba(0,0,0,0.06)' }}>
       <CardContent sx={{ p: '24px', pb: '16px' }}>
@@ -137,16 +139,16 @@ export function RoomChatPanel({
                 sx={{
                   display: 'flex',
                   gap: '16px',
-                  alignItems: 'flex-end',
+                  alignItems: 'center',
                   justifyContent: isOwn ? 'flex-end' : 'flex-start',
                 }}
               >
-                {!isOwn && <Avatar alt={message.author} src={message.avatar} sx={{ width: '40px', height: '40px' }} />}
+                <Avatar alt={message.author} src={message.avatar} sx={{ width: '40px', height: '40px' }} />
                 <Box
                   sx={{
                     maxWidth: '100%',
-                    bgcolor: isOwn ? 'primary.main' : 'background.paper',
-                    color: isOwn ? 'primary.contrastText' : 'text.primary',
+                    bgcolor: 'background.paper',
+                    color: 'text.primary',
                     borderRadius: '12px',
                     p: '16px',
                     boxShadow: '0px 12px 24px rgba(0,0,0,0.04)',
@@ -167,7 +169,7 @@ export function RoomChatPanel({
                           </Typography>
                         )}
                       </Typography>
-                      <Typography variant="labelSmall" sx={{ color: isOwn ? 'rgba(255,255,255,0.7)' : 'gray.main' }}>
+                      <Typography variant="labelSmall" sx={{ color: 'gray.main' }}>
                         {message.time}
                       </Typography>
                     </Stack>
