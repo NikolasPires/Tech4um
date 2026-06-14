@@ -5,6 +5,16 @@ O **Tech4um** é um fórum tecnológico em tempo real projetado para criar um am
 
 ---
 
+## 🚀 Funcionalidades e Diferenciais do Projeto
+- Login e autenticação
+- Dashboard de fóruns
+- Criação de salas
+- Chat em tempo real e Mensagens Privadas
+- Arquitetura Frontend que proporciona desenvolimento ágil (Definição de Temas e Componentização)
+- Criação de hooks perfomáticos com Tanstack Query
+- Facilidade de Execução de Ambiente com Containers Docker
+
+
 ## 🏗️ Arquitetura e Tecnologias
 
 - **Backend:** [FastAPI](https://fastapi.tiangolo.com/) (Python 3.12)
