@@ -21,6 +21,7 @@ from app.schemas.chat import (
     ParticipantCreate,
     ParticipantResponse,
     RoomCreate,
+    RoomListResponse,
     RoomParticipantResponse,
     RoomResponse,
 )
@@ -77,6 +78,17 @@ class ConnectionManager:
         for websocket in room_connections.values():
             await websocket.send_json(message)
 
+    async def broadcast_room_exclude(
+        self,
+        room_id: int,
+        exclude_user_id: int,
+        message: dict,
+    ):
+        room_connections = self.active_connections.get(room_id, {})
+        for user_id, websocket in room_connections.items():
+            if user_id != exclude_user_id:
+                await websocket.send_json(message)
+
 
 manager = ConnectionManager()
 
@@ -119,6 +131,28 @@ async def websocket_room(
 
         while True:
             payload = await websocket.receive_json()
+            event_type = payload.get("event")
+
+            # === NOVO: EVENTO DE DIGITAÇÃO ===
+            if event_type == "typing_status":
+                is_typing = payload.get("is_typing", False)
+                recipient_id = payload.get("recipient_id")
+
+                response = {
+                    "event": "user_typing",
+                    "user_id": user_id,
+                    "is_typing": is_typing,
+                    "recipient_id": recipient_id
+                }
+
+                if recipient_id is not None:
+                    # Se for privado, avisa apenas o destinatário específico
+                    await manager.send_to_user(room_id, recipient_id, response)
+                else:
+                    # Se for público, avisa a sala toda (menos quem está digitando)
+                    await manager.broadcast_room_exclude(room_id, user_id, response)
+                
+                continue # Pula para a próxima iteração do loop
 
             message_text = payload["message"]
             recipient_id = payload.get("recipient_id")
@@ -216,7 +250,7 @@ async def create_room(
     return room
 
 
-@router.get("/rooms", response_model=list[RoomResponse])
+@router.get("/rooms", response_model=list[RoomListResponse])
 async def list_rooms(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
@@ -313,9 +347,11 @@ async def get_room_messages(
     db: AsyncSession = Depends(get_async_db),
     current_user=Depends(get_current_user),
 ):
-    return await ChatController(db).get_room_messages(
+    messages = await ChatController(db).get_room_messages(
         room_id,
         current_user.id,
         limit=limit,
         offset=offset,
     )
+    messages.reverse()
+    return messages

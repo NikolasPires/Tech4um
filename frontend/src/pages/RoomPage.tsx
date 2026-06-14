@@ -19,6 +19,7 @@ import {
   RoomSidebar,
 } from '../components/Room';
 import { useRoomSocket } from '../hooks/useRoomSocket';
+import { useUsersGet } from '../hooks/useUsers';
 const getPlaceholderAvatar = (name: string) =>
   `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff&length=2`;
 
@@ -32,10 +33,12 @@ export default function RoomPage() {
   const { data: room } = useRoom(roomId);
   const { data: participants = [] } = useRoomParticipants(roomId);
   const { data: messages = [] } = useRoomMessages(roomId);
+  const [typingUserName, setTypingUserName] = useState<string | null>(null);
   const {
     connected,
     messages: socketMessages,
     sendMessage,
+    sendTypingStatus,
   } = useRoomSocket(
     roomId,
     user?.id ?? 0,
@@ -43,48 +46,75 @@ export default function RoomPage() {
   const [liveMessages, setLiveMessages] = useState(messages);
   const [draft, setDraft] = useState('');
   const [privateRecipient, setPrivateRecipient] = useState<string | null>(null);
-  const [isPrivateMode, setIsPrivateMode] = useState(true);
+  const [isPrivateMode, setIsPrivateMode] = useState(false);
+  const { data: users = [] } = useUsersGet();
+
+  const roomsWithCreators = useMemo(() => {
+      return rooms.map((room) => {
+        const creator = users.find(
+          (user) => user.id === room.createdBy
+        );
+  
+        return {
+          ...room,
+          creator: creator?.name ?? `Usuário ${room.createdBy}`,
+        };
+      });
+    }, [rooms, users]);
+
+    console.log(roomsWithCreators);
+    console.log(rooms)
 
   useEffect(() => {
   setLiveMessages(messages);
 }, [messages]);
-useEffect(() => {
-  const latest =
-  socketMessages.length > 0
-    ? socketMessages[socketMessages.length - 1]
-    : undefined;
+  useEffect(() => {
+    const latest =
+    socketMessages.length > 0
+      ? socketMessages[socketMessages.length - 1]
+      : undefined;
 
-  if (!latest) return;
+    if (!latest) return;
 
-  if (latest.event !== 'new_message') return;
-
-  console.log('New message received via WebSocket:', latest);
-  setLiveMessages((current) => {
-    const alreadyExists = current.some(
-      (message) => message.id === latest.id,
-    );
-
-    if (alreadyExists) {
-      return current;
+    if (latest.event === 'user_typing') {
+      if (latest.is_typing) {
+        // Procura o nome do participante correspondente ao user_id recebido
+        const tycoon = participantList.find((p) => p.user_id === latest.user_id);
+        setTypingUserName(tycoon ? tycoon.name : `Usuário ${latest.user_id}`);
+      } else {
+        setTypingUserName(null);
+      }
+      return; // Encerra aqui para não misturar com o fluxo de novas mensagens
     }
 
-    return [
-      ...current,
-      {
-        id: latest.id!,
-        room_id: latest.room_id!,
-        user_id: latest.user_id!,
-        recipient_id: latest.recipient_id ?? null,
-        message: latest.message ?? '',
-        image_url: null,
-        message_metadata: null,
-        created_at: latest.created_at ?? new Date().toISOString(),
-        author_name: '',
-        recipient_name: null,
-      },
-    ];
-  });
-}, [socketMessages]);
+    if (latest.event !== 'new_message') return;
+
+    setLiveMessages((current) => {
+      const alreadyExists = current.some(
+        (message) => message.id === latest.id,
+      );
+
+      if (alreadyExists) {
+        return current;
+      }
+
+      return [
+        ...current,
+        {
+          id: latest.id!,
+          room_id: latest.room_id!,
+          user_id: latest.user_id!,
+          recipient_id: latest.recipient_id ?? null,
+          message: latest.message ?? '',
+          image_url: null,
+          message_metadata: null,
+          created_at: latest.created_at ?? new Date().toISOString(),
+          author_name: '',
+          recipient_name: null,
+        },
+      ];
+    });
+  }, [socketMessages]);
 
   const participantList = useMemo(
   () =>
@@ -97,17 +127,7 @@ useEffect(() => {
     })),
   [participants]
 );
-  useEffect(() => {
-    if (!privateRecipient && participantList.length > 0) {
-      const firstRecipient = participantList.find((participant) => participant.name !== user?.name);
-      setPrivateRecipient(firstRecipient?.name ?? participantList[0].name);
-    }
-  }, [privateRecipient, participantList, user?.name]);
 
-  const sidebarRooms = useMemo(
-    () => rooms.map((roomItem) => ({ id: roomItem.id, title: roomItem.title, creator: roomItem.creator || 'Desconhecido', members: roomItem.members })),
-    [rooms],
-  );
 
   const currentRoom = useMemo(
     () => ({
@@ -222,10 +242,17 @@ useEffect(() => {
               currentUser={user?.name ?? 'Você'}
               currentRoom={currentRoom}
               visibleMessages={visibleMessages}
-              typingUser={!connected ? 'Conectando...' : null}
+              typingUser={typingUserName} 
               draft={draft}
               onDraftChange={setDraft}
               onSend={handleSend}
+              onTypingStatusChange={(isTyping) => {
+                const recipient = participantList.find((p) => p.name === privateRecipient);
+                sendTypingStatus({
+                  is_typing: isTyping,
+                  recipient_id: isPrivateMode && recipient ? recipient.user_id : null,
+                });
+              }}
               isPrivateMode={isPrivateMode}
               selectedRecipient={selectedRecipient}
               onCancelPrivate={handleCancelPrivate}
@@ -234,7 +261,7 @@ useEffect(() => {
 
           <Grid item xs={12} md={3}>
             <RoomSidebar
-              suggestedRooms={sidebarRooms}
+              suggestedRooms={roomsWithCreators}
               roomId={String(roomId)}
               onNavigate={(targetRoomId) => navigate(`/room/${targetRoomId}`)}
             />

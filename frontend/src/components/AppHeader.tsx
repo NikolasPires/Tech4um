@@ -20,29 +20,20 @@ export default function AppHeader({ title, subtitle, user, isLoading, onLogin, o
       .slice(0, 2);
 
   return (
-    <AppBar position="static" color="transparent" elevation={1} sx={{ mb: 4 }}>
+    <AppBar position="static" color="transparent" elevation={0} sx={{ mb: 4, py: 2, boxShadow: '0px 2px 4px rgba(0,0,0,0.1)' }}>
       <Container maxWidth="xl">
         <Toolbar disableGutters sx={{ justifyContent: 'space-between', px: { xs: 0, md: 2 } }}>
-          <Stack direction="row" spacing={1}>
+          <Stack direction="row" spacing={1} alignItems="flex-end">
             <img src="/Logo.png" alt="Logo" style={{ height: '44px', width: '92px' }} />
-            <Box>
-              {title && (
-                <Typography variant="body2" sx={{ color: 'gray.main', fontWeight: 700 }}>
-                  {title}
-                </Typography>
-              )}
-              {subtitle && (
-                <Typography variant="body2" sx={{ color: 'gray.main' }}>
-                  {subtitle}
-                </Typography>
-              )}
-            </Box>
+            <Typography variant="labelLarge" sx={{ color: 'gray.main', fontWeight: 300 }}>
+              Seu fórum sobre tecnologia!
+            </Typography>
           </Stack>
 
           <Stack direction="row" spacing={2} alignItems="center">
             {user ? (
               <>
-                <Box textAlign="right">
+                <Box textAlign="left">
                   <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'text.primary' }}>
                     {user.name}
                   </Typography>
@@ -50,7 +41,7 @@ export default function AppHeader({ title, subtitle, user, isLoading, onLogin, o
                     {user.email}
                   </Typography>
                 </Box>
-                <Avatar sx={{ bgcolor: 'primary.dark', cursor: 'pointer' }} onClick={onLogout}>
+                <Avatar sx={{ bgcolor: 'primary.dark', cursor: 'pointer' }}>
                   {getInitials(user.name)}
                 </Avatar>
                 <Button onClick={onLogout} sx={{ color: 'text.secondary', textTransform: 'none' }}>

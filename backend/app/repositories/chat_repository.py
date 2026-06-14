@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -29,11 +29,23 @@ class ChatRepository:
     async def get_room_by_id(self, room_id: int) -> Room | None:
         return await self.db.get(Room, room_id)
 
-    async def list_rooms(self, limit: int = 20, offset: int = 0) -> List[Room]:
+    async def list_rooms(self, limit: int = 20, offset: int = 0):
         result = await self.db.execute(
-            select(Room).order_by(Room.created_at.desc()).limit(limit).offset(offset)
+            select(
+                Room,
+                func.count(Participant.user_id).label("members"),
+            )
+            .outerjoin(
+                Participant,
+                Participant.room_id == Room.id,
+            )
+            .group_by(Room.id)
+            .order_by(Room.created_at.desc())
+            .limit(limit)
+            .offset(offset)
         )
-        return result.scalars().all()
+
+        return result.all()
 
     async def list_room_participants(self, room_id: int) -> List[Participant]:
         result = await self.db.execute(

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 const API_BASE_URL = ((import.meta as any).env.VITE_API_BASE_URL as string | undefined) ?? '';
 
 export type SocketMessage = {
-  event: 'new_message' | 'user_joined' | 'user_left';
+  event: 'new_message' | 'user_joined' | 'user_left' | 'user_typing';
   id?: number;
   room_id?: number;
   sender_id?: number;
@@ -14,10 +14,16 @@ export type SocketMessage = {
   username?: string;
   message?: string;
   created_at?: string;
+  is_typing?: boolean;
 };
 
 type SendMessagePayload = {
   message: string;
+  recipient_id?: number | null;
+};
+
+type SendTypingPayload = {
+  is_typing: boolean;
   recipient_id?: number | null;
 };
 
@@ -82,6 +88,22 @@ export function useRoomSocket(
     [],
   );
 
+  const sendTypingStatus = useCallback(
+    (payload: SendTypingPayload) => {
+      if (!socketRef.current) return;
+      if (socketRef.current.readyState !== WebSocket.OPEN) return;
+
+      socketRef.current.send(
+        JSON.stringify({
+          event: 'typing_status',
+          is_typing: payload.is_typing,
+          recipient_id: payload.recipient_id ?? null,
+        }),
+      );
+    },
+    [],
+  );
+
   useEffect(() => {
   if (!roomId || !userId) return;
 
@@ -96,6 +118,7 @@ export function useRoomSocket(
     connected,
     messages,
     sendMessage,
+    sendTypingStatus,
     disconnect,
   };
 }

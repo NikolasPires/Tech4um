@@ -20,6 +20,8 @@ class RoomResponse(BaseModel):
         "from_attributes": True,
     }
 
+class RoomListResponse(RoomResponse):
+    members: int
 
 class ParticipantCreate(BaseModel):
     user_id: int

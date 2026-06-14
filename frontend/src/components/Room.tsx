@@ -3,6 +3,9 @@ import { ChatBubbleOutline, Send } from '@mui/icons-material';
 import InsertEmoticonIcon from '@mui/icons-material/InsertEmoticon';
 import InsertPhotoOutlinedIcon from '@mui/icons-material/InsertPhotoOutlined';
 import SearchIcon from '@mui/icons-material/Search';
+import { useEffect, useRef } from 'react';
+import { useAddRoomParticipant } from '../hooks/useRoom';
+import { useAuth } from '../contexts/AuthContext';
 
 export type Message = {
   id: string;
@@ -36,19 +39,34 @@ type RoomParticipantsPanelProps = {
 };
 
 export function RoomParticipantsPanel({ participants, onSelectRecipient }: RoomParticipantsPanelProps) {
+  const user = useAuth().user;
+  participants.sort((a, b) => {
+    if (a.role === 'Criador' && b.role !== 'Criador') return -1;
+    if (a.role !== 'Criador' && b.role === 'Criador') return 1;
+    return a.name.localeCompare(b.name);
+  });
   return (
-    <Card elevation={0} sx={{ borderRadius: '16px', boxShadow: '0px 14px 40px rgba(0,0,0,0.06)', height: '100%' }}>
-      <CardContent sx={{ p: '24px' }}>
-        <Stack direction="row" spacing={'16px'} alignItems="center" justifyContent="space-between" sx={{ mb: '16px' }}>
+    <Card 
+      elevation={0} 
+      sx={{ 
+        borderRadius: '16px', 
+        boxShadow: '0px 14px 40px rgba(0,0,0,0.06)', 
+        height: { xs: 'auto', md: '75vh' }, // Travado na mesma altura do chat para simetria visual
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
+      <CardContent sx={{ p: '24px', display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <Stack direction="row" spacing={'16px'} alignItems="center" justifyContent="space-between" sx={{ mb: '16px', flexShrink: 0 }}>
           <Typography variant="labelLarge" sx={{ fontWeight: 700, color: 'primary.dark' }}>
             Participantes
           </Typography>
           <SearchIcon sx={{ color: 'primary.main' }} />
         </Stack>
 
-        <Stack spacing={'16px'}>
+        <Stack spacing={'16px'} sx={{ overflowY: 'auto', flexGrow: 1, pr: '4px' }}>
           {participants.map((participant) => (
-            <Tooltip key={participant.name} title={`Enviar mensagem para ${participant.name}`} placement="top" arrow>
+            <Tooltip key={participant.name} title={user?.id !== participant.user_id ? `Enviar mensagem para ${participant.name}` : undefined} placement="top" arrow>
               <Stack
                 direction="row"
                 alignItems="center"
@@ -58,10 +76,10 @@ export function RoomParticipantsPanel({ participants, onSelectRecipient }: RoomP
                   px: '16px',
                   py: '12px',
                   borderRadius: '12px',
-                  cursor: 'pointer',
+                  cursor: user?.id !== participant.user_id ? 'pointer' : undefined,
                   transition: 'background-color 0.2s ease',
                   '&:hover': {
-                    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                    backgroundColor: user?.id !== participant.user_id ? 'rgba(0, 0, 0, 0.04)' : undefined,
                   },
                 }}
               >
@@ -74,9 +92,11 @@ export function RoomParticipantsPanel({ participants, onSelectRecipient }: RoomP
                     {participant.role}
                   </Typography>
                 </Box>
-                <IconButton size="small" sx={{ color: 'primary.dark' }}>
-                  <ChatBubbleOutline fontSize="small" />
-                </IconButton>
+                  {user?.id !== participant.user_id && (
+                    <IconButton size="small" sx={{ color: 'primary.dark' }}>
+                      <ChatBubbleOutline fontSize="small" />
+                    </IconButton>
+                  )}
               </Stack>
             </Tooltip>
           ))}
@@ -97,6 +117,7 @@ type RoomChatPanelProps = {
   isPrivateMode: boolean;
   selectedRecipient: Participant | null;
   onCancelPrivate: () => void;
+  onTypingStatusChange: (isTyping: boolean) => void;
 };
 
 export function RoomChatPanel({
@@ -110,11 +131,71 @@ export function RoomChatPanel({
   isPrivateMode,
   selectedRecipient,
   onCancelPrivate,
+  onTypingStatusChange,
 }: RoomChatPanelProps) {
-  console.log(visibleMessages);
+  
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isCurrentlyTypingRef = useRef(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null); // Referência para scroll automático
+
+  // Função para rolar o chat para baixo
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Faz o scroll rolar quando chegam novas mensagens ou quando alguém começa a digitar
+  useEffect(() => {
+    scrollToBottom();
+  }, [visibleMessages, typingUser]);
+
+  const handleInputChange = (value: string) => {
+    onDraftChange(value);
+
+    if (!isCurrentlyTypingRef.current && value.trim().length > 0) {
+      isCurrentlyTypingRef.current = true;
+      onTypingStatusChange(true);
+    }
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+    if (value.trim().length === 0) {
+      isCurrentlyTypingRef.current = false;
+      onTypingStatusChange(false);
+    } else {
+      typingTimeoutRef.current = setTimeout(() => {
+        isCurrentlyTypingRef.current = false;
+        onTypingStatusChange(false);
+      }, 2000);
+    }
+  };
+
+  const handleSendClick = () => {
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    isCurrentlyTypingRef.current = false;
+    onTypingStatusChange(false);
+    onSend();
+  };
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    };
+  }, []);
+
   return (
-    <Card elevation={0} sx={{ borderRadius: '16px', boxShadow: '0px 14px 40px rgba(0,0,0,0.06)' }}>
-      <CardContent sx={{ p: '24px', pb: '16px' }}>
+    <Card 
+      elevation={0} 
+      sx={{ 
+        borderRadius: '16px', 
+        boxShadow: '0px 14px 40px rgba(0,0,0,0.06)',
+        // === MELHORIA: Altura fixa e dinâmica ===
+        height: { xs: '70vh', md: '75vh' }, // Fixa o tamanho em telas grandes e adapta em mobile
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {/* Cabeçalho fixo */}
+      <CardContent sx={{ p: '24px', pb: '16px', flexShrink: 0 }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Typography variant="titleMedium" sx={{ color: 'primary.dark' }}>
             {currentRoom.title}
@@ -125,10 +206,20 @@ export function RoomChatPanel({
         </Stack>
       </CardContent>
 
-      <Divider />
+      <Divider sx={{ flexShrink: 0 }} />
 
-      <Box sx={{ maxHeight: '58vh', overflowY: 'auto', px: '24px', pb: '16px', pt: '16px' }}>
-        <Stack spacing={'16px'}>
+      {/* === MELHORIA: Área de mensagens consome todo o espaço interno sobressalente === */}
+      <Box 
+        sx={{ 
+          flexGrow: 1, 
+          overflowY: 'auto', 
+          px: '24px', 
+          py: '16px',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        <Stack spacing={'16px'} sx={{ width: '100%' }}>
           {visibleMessages.map((message) => {
             const isOwn = message.author === currentUser;
             const isPrivateVisible = message.isPrivate && (message.author === currentUser || message.recipient === currentUser);
@@ -182,31 +273,58 @@ export function RoomChatPanel({
             );
           })}
 
+          {/* === MELHORIA VISUAL: Card de digitação inline sem mover a janela externa === */}
           {typingUser && (
-            <Card elevation={0} sx={{ bgcolor: 'background.default', borderRadius: '12px', p: '16px', border: '1px solid rgba(0,0,0,0.08)' }}>
-              <Typography variant="body2" sx={{ color: 'gray.main' }}>
+            <Card 
+              elevation={0} 
+              sx={{ 
+                bgcolor: 'background.default', 
+                borderRadius: '12px', 
+                p: '12px', 
+                border: '1px solid rgba(0,0,0,0.08)',
+                width: 'fit-content',
+                alignSelf: 'flex-start',
+                animation: 'fadeIn 0.3s ease-in-out'
+              }}
+            >
+              <Typography variant="body2" sx={{ color: 'gray.main', fontStyle: 'italic' }}>
                 {typingUser} está digitando...
               </Typography>
             </Card>
           )}
+
+          {/* Elemento invisível para ancorar o fim das mensagens */}
+          <div ref={messagesEndRef} />
         </Stack>
       </Box>
 
-      <Divider sx={{ mt: '16px' }} />
+      <Divider sx={{ flexShrink: 0 }} />
 
-      <Box sx={{ px: '24px', py: '16px', bgcolor: isPrivateMode ? 'secondary.dark' : 'primary.dark', borderBottomLeftRadius: '16px', borderBottomRightRadius: '16px' }}>
+      {/* Caixa de Texto Fixa no rodapé */}
+      <Box 
+        sx={{ 
+          px: '24px', 
+          py: '16px', 
+          bgcolor: isPrivateMode ? 'secondary.dark' : 'primary.dark', 
+          borderBottomLeftRadius: '16px', 
+          borderBottomRightRadius: '16px',
+          flexShrink: 0 
+        }}
+      >
         <Stack spacing={'16px'}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={'8px'}>
-            <Typography variant="labelSmall" sx={{ color: 'primary.contrastText' }}>
-              {isPrivateMode && selectedRecipient ? `Enviando para ${selectedRecipient.name}` : 'Enviando para todos do 4um'}
-            </Typography>
-            {isPrivateMode && (
-              <Button variant="text" onClick={onCancelPrivate} sx={{ color: 'primary.contrastText', textTransform: 'none', p: 0 }}>
-                <Typography variant="labelSmall" sx={{ textDecoration: 'underline' }}>
-                  Cancelar envio privado
-                </Typography>
-              </Button>
-            )}
+            <Box gap={1} display="flex" alignItems="center">
+              <Typography variant="labelSmall" sx={{ color: 'primary.contrastText' }}>
+                {isPrivateMode && selectedRecipient ? `Enviando para ${selectedRecipient.name}` : 'Enviando para todos do 4um'}
+              </Typography>
+              {isPrivateMode && (
+                <Button variant="text" onClick={onCancelPrivate} sx={{ color: 'primary.contrastText', textTransform: 'none', p: 0 }}>
+                  <Typography variant="labelSmall" sx={{ textDecoration: 'underline' }}>
+                    Cancelar envio privado
+                  </Typography>
+                </Button>
+              )}
+            </Box>
             <Box sx={{ display: 'flex', gap: '16px' }}>
               <InsertEmoticonIcon sx={{ color: 'white', cursor: 'pointer' }} />
               <InsertPhotoOutlinedIcon sx={{ color: 'white', cursor: 'pointer' }} />
@@ -216,7 +334,7 @@ export function RoomChatPanel({
           <TextField
             fullWidth
             value={draft}
-            onChange={(event) => onDraftChange(event.target.value)}
+            onChange={(event) => handleInputChange(event.target.value)}
             placeholder="Escreva aqui uma mensagem maneira para mandar para os colegas.."
             variant="filled"
             InputProps={{
@@ -224,7 +342,7 @@ export function RoomChatPanel({
               sx: { borderRadius: '999px', backgroundColor: 'background.paper', px: '16px' },
               endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton onClick={onSend} sx={{ color: 'primary.dark' }}>
+                  <IconButton onClick={handleSendClick} sx={{ color: 'primary.dark' }}>
                     <Send />
                   </IconButton>
                 </InputAdornment>
@@ -244,8 +362,12 @@ type RoomSidebarProps = {
 };
 
 export function RoomSidebar({ suggestedRooms, roomId, onNavigate }: RoomSidebarProps) {
+  const useAddParticipantMutation = useAddRoomParticipant();
+  const user = useAuth().user;
   return (
-    <Stack spacing={'12px'}>
+    <Stack spacing={'12px'} sx={{ maxHeight: { xs: 'auto', md: '75vh' }, overflowY: 'auto', pr: '4px' }}
+      onClick={() => useAddParticipantMutation.mutate({ roomId: Number(roomId), userId: user?.id })} // Substitua 1 pelo ID do usuário atual
+      >
       {suggestedRooms.map((room) => {
         const isSelected = room.id === roomId;
 
@@ -266,6 +388,7 @@ export function RoomSidebar({ suggestedRooms, roomId, onNavigate }: RoomSidebarP
               display: 'flex',
               flexDirection: 'column',
               gap: '4px',
+              flexShrink: 0,
               '&:hover': {
                 bgcolor: isSelected ? 'rgba(23, 153, 246, 0.12)' : 'rgba(0, 0, 0, 0.02)',
                 borderColor: isSelected ? 'primary.main' : 'gray.light',

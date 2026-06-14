@@ -42,4 +42,16 @@ class ChatController:
         ]
 
     async def list_rooms(self, limit: int = 20, offset: int = 0):
-        return await self.repository.list_rooms(limit=limit, offset=offset)
+        rooms = await self.repository.list_rooms(limit=limit, offset=offset)
+
+        return [
+            {
+                "id": room.id,
+                "name": room.name,
+                "description": room.description,
+                "created_by": room.created_by,
+                "created_at": room.created_at,
+                "members": members,
+            }
+            for room, members in rooms
+        ]

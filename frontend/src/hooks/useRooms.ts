@@ -11,6 +11,7 @@ type BackendRoom = {
   description: string | null;
   created_by: number;
   created_at: string;
+  members: number;
 };
 
 const computeRoomSize = (room: Pick<RoomCardData, 'title' | 'description'>) => {
@@ -28,7 +29,7 @@ const mapRoomFromBackend = (room: BackendRoom): RoomCardData => ({
   id: String(room.id),
   title: room.name,
   createdBy: room.created_by,
-  members: 0,
+  members: room.members ?? 0,
   description: room.description ?? '',
   featured: new Date(room.created_at).getTime() >= Date.now() - 24 * 60 * 60 * 1000,
   size: computeRoomSize({ title: room.name, description: room.description ?? '' }),
