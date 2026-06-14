@@ -6,6 +6,10 @@ from app.routes import auth as auth_routes, users as user_routes, chat as chat_r
 
 app = FastAPI(title="Tech4um API")
 
+@app.get("/healthz")
+async def health_check():
+    return {"status": "ok"}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
