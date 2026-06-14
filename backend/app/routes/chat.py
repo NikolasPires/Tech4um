@@ -44,7 +44,6 @@ class ConnectionManager:
         user_id: int,
     ):
         await websocket.accept()
-        print(4)
         self.active_connections[room_id][user_id] = websocket
 
     def disconnect(
@@ -102,7 +101,6 @@ async def websocket_room(
     room_id: int,
     token: str = Query(...),
 ):
-    print("1")
     db = AsyncSessionLocal()
 
     try:
@@ -119,14 +117,12 @@ async def websocket_room(
             return
 
         user_id = user.id
-        print("2" + "Room " + str(room_id) + "User " + str(user_id))
         repository = ChatRepository(db)
 
         participant = await repository.get_participant(
             room_id,
             user_id,
         )
-        print("3", participant)
 
         if not participant:
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
@@ -149,7 +145,6 @@ async def websocket_room(
             payload = await websocket.receive_json()
             event_type = payload.get("event")
 
-            # === NOVO: EVENTO DE DIGITAÇÃO ===
             if event_type == "typing_status":
                 is_typing = payload.get("is_typing", False)
                 recipient_id = payload.get("recipient_id")

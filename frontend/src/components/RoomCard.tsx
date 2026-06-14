@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Card, CardContent, Chip, Typography, useTheme } from '@mui/material';
+import { useAuth } from '../contexts/AuthContext';
+import { useAddRoomParticipant } from '../hooks/useRoom';
 
 export type RoomCardData = {
   id: string;
@@ -16,11 +18,27 @@ export type RoomCardData = {
 export default function RoomCard({ room }: { room: RoomCardData }) {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+  const addParticipantMutation = useAddRoomParticipant();
+
+  const handleCardClick = async () => {
+    if (isAuthenticated && user) {
+      try {
+        await addParticipantMutation.mutateAsync({
+          roomId: Number(room.id),
+          userId: user.id,
+        });
+      } catch (err) {
+        console.error('Failed to add participant:', err);
+      }
+    }
+    navigate(`/room/${room.id}`);
+  };
 
   return (
     <Card
       elevation={0}
-      onClick={() => navigate(`/room/${room.id}`)}
+      onClick={handleCardClick}
       sx={{
         cursor: 'pointer',
         backgroundColor: theme.palette.background.paper,

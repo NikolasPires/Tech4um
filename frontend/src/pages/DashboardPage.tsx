@@ -122,88 +122,89 @@ function DashboardPage() {
           </Grid>
 
           <Grid item xs={12} md={4} lg={3} display="flex" justifyContent="flex-end">
-              <Button
-                variant="contained"
-                onClick={() => (!isAuthenticated ? setIsAuthOpen(true) : setIsCreateOpen(true))}
-                sx={{
-                  height: 56,
-                  px: 4,
-                  borderRadius: '18px',
-                  bgcolor: '#1565c0',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  fontSize: 16,
-                }}
-              >
-                Ou crie seu próprio 4um
-              </Button>
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={() => (!isAuthenticated ? setIsAuthOpen(true) : setIsCreateOpen(true))}
+              sx={{
+                height: 56,
+                px: 4,
+                borderRadius: '18px',
+                bgcolor: '#1565c0',
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: 16,
+              }}
+            >
+              Ou crie seu próprio 4um
+            </Button>
           </Grid>
         </Grid>
 
         {/* Grid de Cards */}
-{isLoading ? (
-  <Box
-    sx={{
-      display: 'grid',
-      gridTemplateColumns: {
-        xs: '1fr',
-        sm: 'repeat(2, 1fr)',
-        lg: 'repeat(4, 1fr)',
-      },
-      gap: 3,
-    }}
-  >
-    {skeletonItems.map((_, index) => (
-      <Card
-        key={`skeleton-${index}`}
-        sx={{
-          borderRadius: '24px',
-          minHeight: 200,
-        }}
-      >
-        <CardContent sx={{ p: 3 }}>
-          <Stack spacing={2}>
-            <Skeleton width={120} height={20} />
-            <Skeleton width="90%" height={32} />
-            <Skeleton width="100%" height={60} />
-          </Stack>
-        </CardContent>
-      </Card>
-    ))}
-  </Box>
-) : (
-  <Box
-    sx={{
-      display: 'grid',
+        {isLoading ? (
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                sm: 'repeat(2, 1fr)',
+                lg: 'repeat(4, 1fr)',
+              },
+              gap: 3,
+            }}
+          >
+            {skeletonItems.map((_, index) => (
+              <Card
+                key={`skeleton-${index}`}
+                sx={{
+                  borderRadius: '24px',
+                  minHeight: 200,
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Stack spacing={2}>
+                    <Skeleton width={120} height={20} />
+                    <Skeleton width="90%" height={32} />
+                    <Skeleton width="100%" height={60} />
+                  </Stack>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: 'grid',
 
-      gridTemplateColumns: {
-        xs: '1fr',
-        sm: 'repeat(2, 1fr)',
-        lg: 'repeat(4, 1fr)',
-      },
+              gridTemplateColumns: {
+                xs: '1fr',
+                sm: 'repeat(2, 1fr)',
+                lg: 'repeat(4, 1fr)',
+              },
 
-      gap: 3,
+              gap: 3,
 
-      alignItems: 'start',
-    }}
-  >
-    {filteredRooms.map((room) => (
-      <Box
-        key={room.id}
-        sx={{
-          gridColumn: {
-            xs: 'span 1',
-            sm: room.size === 'large' ? 'span 2' : 'span 1',
-          },
+              alignItems: 'start',
+            }}
+          >
+            {filteredRooms.map((room) => (
+              <Box
+                key={room.id}
+                sx={{
+                  gridColumn: {
+                    xs: 'span 1',
+                    sm: room.size === 'large' ? 'span 2' : 'span 1',
+                  },
 
-          height: 'fit-content',
-        }}
-      >
-        <RoomCardComponent room={room} />
-      </Box>
-    ))}
-  </Box>
-)}
+                  height: 'fit-content',
+                }}
+              >
+                <RoomCardComponent room={room} />
+              </Box>
+            ))}
+          </Box>
+        )}
 
 
         <CreateRoomModal open={isCreateOpen} onClose={() => setIsCreateOpen(false)} onCreate={handleCreate} />

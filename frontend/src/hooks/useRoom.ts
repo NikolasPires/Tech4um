@@ -168,6 +168,9 @@ export function useAddRoomParticipant() {
       queryClient.invalidateQueries({
         queryKey: roomParticipantsQueryKey(variables.roomId),
       });
+      queryClient.invalidateQueries({
+        queryKey: ['rooms'],
+      });
     },
   });
 }

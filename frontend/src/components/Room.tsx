@@ -1,5 +1,5 @@
 import { Avatar, Box, Button, Card, CardContent, Divider, IconButton, InputAdornment, Stack, TextField, Tooltip, Typography, Chip } from '@mui/material';
-import { ChatBubbleOutline, Send } from '@mui/icons-material';
+import { ChatBubbleOutline, Send, People } from '@mui/icons-material';
 import InsertEmoticonIcon from '@mui/icons-material/InsertEmoticon';
 import InsertPhotoOutlinedIcon from '@mui/icons-material/InsertPhotoOutlined';
 import SearchIcon from '@mui/icons-material/Search';
@@ -188,7 +188,6 @@ export function RoomChatPanel({
       sx={{ 
         borderRadius: '16px', 
         boxShadow: '0px 14px 40px rgba(0,0,0,0.06)',
-        // === MELHORIA: Altura fixa e dinâmica ===
         height: { xs: '70vh', md: '75vh' }, // Fixa o tamanho em telas grandes e adapta em mobile
         display: 'flex',
         flexDirection: 'column',
@@ -208,7 +207,6 @@ export function RoomChatPanel({
 
       <Divider sx={{ flexShrink: 0 }} />
 
-      {/* === MELHORIA: Área de mensagens consome todo o espaço interno sobressalente === */}
       <Box 
         sx={{ 
           flexGrow: 1, 
@@ -273,7 +271,6 @@ export function RoomChatPanel({
             );
           })}
 
-          {/* === MELHORIA VISUAL: Card de digitação inline sem mover a janela externa === */}
           {typingUser && (
             <Card 
               elevation={0} 
@@ -339,7 +336,19 @@ export function RoomChatPanel({
             variant="filled"
             InputProps={{
               disableUnderline: true,
-              sx: { borderRadius: '999px', backgroundColor: 'background.paper', px: '16px' },
+              sx: { 
+                borderRadius: '999px', 
+                backgroundColor: 'background.paper', 
+                px: '16px',
+
+                '&.Mui-focused': {
+                  backgroundColor: 'background.paper',
+                },
+
+                '&:hover': {
+                  backgroundColor: 'background.paper',
+                }
+              },
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton onClick={handleSendClick} sx={{ color: 'primary.dark' }}>
@@ -348,7 +357,7 @@ export function RoomChatPanel({
                 </InputAdornment>
               ),
             }}
-          />
+/>
         </Stack>
       </Box>
     </Card>
@@ -364,17 +373,30 @@ type RoomSidebarProps = {
 export function RoomSidebar({ suggestedRooms, roomId, onNavigate }: RoomSidebarProps) {
   const useAddParticipantMutation = useAddRoomParticipant();
   const user = useAuth().user;
+
+  const handleRoomClick = async (targetRoomId: string) => {
+    if (user) {
+      try {
+        await useAddParticipantMutation.mutateAsync({
+          roomId: Number(targetRoomId),
+          userId: user.id,
+        });
+      } catch (err) {
+        console.error('Failed to add participant to clicked room:', err);
+      }
+    }
+    onNavigate(targetRoomId);
+  };
+
   return (
-    <Stack spacing={'12px'} sx={{ maxHeight: { xs: 'auto', md: '75vh' }, overflowY: 'auto', pr: '4px' }}
-      onClick={() => useAddParticipantMutation.mutate({ roomId: Number(roomId), userId: user?.id ?? 0 })} // Substitua 1 pelo ID do usuário atual
-      >
+    <Stack spacing={'12px'} sx={{ maxHeight: { xs: 'auto', md: '75vh' }, overflowY: 'auto', pr: '4px' }}>
       {suggestedRooms.map((room) => {
         const isSelected = room.id === roomId;
 
         return (
           <Box
             key={room.id}
-            onClick={() => onNavigate(room.id)}
+            onClick={() => handleRoomClick(room.id)}
             sx={{
               borderRadius: '12px',
               bgcolor: isSelected ? 'rgba(23, 153, 246, 0.08)' : 'background.paper',
@@ -411,7 +433,8 @@ export function RoomSidebar({ suggestedRooms, roomId, onNavigate }: RoomSidebarP
               </Typography>
 
               <Chip
-                label={`${room.members} devs`}
+                icon={<People style={{ color: 'inherit', fontSize: '14px' }} />}
+                label={room.members}
                 size="small"
                 sx={{
                   fontSize: '11px',

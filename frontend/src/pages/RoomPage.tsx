@@ -61,9 +61,6 @@ export default function RoomPage() {
       });
     }, [rooms, users]);
 
-    console.log(roomsWithCreators);
-    console.log(rooms)
-
   useEffect(() => {
   setLiveMessages(messages);
 }, [messages]);

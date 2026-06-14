@@ -33,7 +33,9 @@ export default function AppHeader({ title, subtitle, user, isLoading, onLogin, o
           <Stack direction="row" spacing={2} alignItems="center">
             {user ? (
               <>
-                <Box textAlign="left">
+                <Box textAlign="left" sx={{
+                  display: { xs: 'none', md: 'block' }
+                }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'text.primary' }}>
                     {user.name}
                   </Typography>
