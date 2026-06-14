@@ -29,7 +29,6 @@ type SendTypingPayload = {
 
 export function useRoomSocket(
   roomId: number,
-  userId?: number,
 ) {
   const socketRef = useRef<WebSocket | null>(null);
 
@@ -42,8 +41,11 @@ export function useRoomSocket(
       .replace('http://', 'ws://')
       .replace('https://', 'wss://');
 
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+
     const socket = new WebSocket(
-      `${wsUrl}/chat/ws/rooms/${roomId}?user_id=${userId}`,
+      `${wsUrl}/chat/ws/rooms/${roomId}?token=${encodeURIComponent(token)}`,
     );
 
     socket.onopen = () => {
@@ -65,7 +67,7 @@ export function useRoomSocket(
     };
 
     socketRef.current = socket;
-  }, [roomId, userId]);
+  }, [roomId]);
 
   const disconnect = useCallback(() => {
     socketRef.current?.close();
@@ -105,14 +107,14 @@ export function useRoomSocket(
   );
 
   useEffect(() => {
-  if (!roomId || !userId) return;
+  if (!roomId) return;
 
   connect();
 
   return () => {
     disconnect();
   };
-}, [roomId, userId, connect, disconnect]);
+}, [roomId, connect, disconnect]);
 
   return {
     connected,

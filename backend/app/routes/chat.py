@@ -13,6 +13,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal
 from app.core.deps import get_async_db, get_current_user
+from app.core.security import decode_access_token
+from app.models.user import User
+from sqlalchemy import select
 from app.controllers.chat_controller import ChatController
 from app.repositories.chat_repository import ChatRepository
 from app.schemas.chat import (
@@ -97,12 +100,25 @@ manager = ConnectionManager()
 async def websocket_room(
     websocket: WebSocket,
     room_id: int,
-    user_id: int,
+    token: str = Query(...),
 ):
     print("1")
     db = AsyncSessionLocal()
 
     try:
+        try:
+            username = decode_access_token(token)
+        except Exception:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+
+        result = await db.execute(select(User).filter(User.username == username))
+        user = result.scalar_one_or_none()
+        if not user:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+
+        user_id = user.id
         print("2" + "Room " + str(room_id) + "User " + str(user_id))
         repository = ChatRepository(db)
 
@@ -113,7 +129,7 @@ async def websocket_room(
         print("3", participant)
 
         if not participant:
-            await websocket.close(code=1008)
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
             return
 
         await manager.connect(

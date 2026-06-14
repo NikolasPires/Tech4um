@@ -1,23 +1,14 @@
-from typing import AsyncGenerator, Generator
+from typing import AsyncGenerator
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
 
 from app.core import security
-from app.core.database import AsyncSessionLocal, SessionLocal
+from app.core.database import AsyncSessionLocal
 from app.repositories.user_repository import UserRepository
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
-
-
-def get_db() -> Generator[Session, None, None]:
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
@@ -25,9 +16,10 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
         yield db
 
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    from app.models.user import User
-
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_async_db),
+):
     try:
         username = security.decode_access_token(token)
     except Exception:
@@ -37,7 +29,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user = UserRepository(db).get_by_username(username)
+    user = await UserRepository(db).get_by_username(username)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

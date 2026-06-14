@@ -134,7 +134,7 @@ export function RoomChatPanel({
   onTypingStatusChange,
 }: RoomChatPanelProps) {
   
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<any | null>(null);
   const isCurrentlyTypingRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null); // Referência para scroll automático
 
@@ -366,7 +366,7 @@ export function RoomSidebar({ suggestedRooms, roomId, onNavigate }: RoomSidebarP
   const user = useAuth().user;
   return (
     <Stack spacing={'12px'} sx={{ maxHeight: { xs: 'auto', md: '75vh' }, overflowY: 'auto', pr: '4px' }}
-      onClick={() => useAddParticipantMutation.mutate({ roomId: Number(roomId), userId: user?.id })} // Substitua 1 pelo ID do usuário atual
+      onClick={() => useAddParticipantMutation.mutate({ roomId: Number(roomId), userId: user?.id ?? 0 })} // Substitua 1 pelo ID do usuário atual
       >
       {suggestedRooms.map((room) => {
         const isSelected = room.id === roomId;

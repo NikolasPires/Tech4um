@@ -41,7 +41,6 @@ export default function RoomPage() {
     sendTypingStatus,
   } = useRoomSocket(
     roomId,
-    user?.id ?? 0,
   );
   const [liveMessages, setLiveMessages] = useState(messages);
   const [draft, setDraft] = useState('');
