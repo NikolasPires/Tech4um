@@ -108,3 +108,18 @@ class ChatRepository:
             .offset(offset)
         )
         return result.scalars().all()
+
+    async def get_featured_room_ids(self) -> List[int]:
+        from datetime import datetime, timezone, timedelta
+        from app.models.room_message import RoomMessage
+
+        last_24h = datetime.now(timezone.utc) - timedelta(hours=24)
+
+        result = await self.db.execute(
+            select(RoomMessage.room_id)
+            .where(RoomMessage.created_at >= last_24h)
+            .group_by(RoomMessage.room_id)
+            .order_by(func.count(RoomMessage.id).desc())
+            .limit(3)
+        )
+        return [row[0] for row in result.all()]

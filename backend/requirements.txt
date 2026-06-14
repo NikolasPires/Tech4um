@@ -10,3 +10,6 @@ python-dotenv
 pydantic[email]>=2.0,<3.0
 asyncpg
 aiosqlite
+pytest
+pytest-asyncio
+httpx

@@ -11,6 +11,8 @@ import {
   Stack,
   TextField,
   Typography,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import Masonry from '@mui/lab/Masonry'; // Importação do Masonry para o efeito cascata
 import SearchIcon from '@mui/icons-material/Search';
@@ -36,6 +38,8 @@ function DashboardPage() {
   const [query, setQuery] = useState('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastSeverity, setToastSeverity] = useState<'success' | 'error' | 'warning' | 'info'>('warning');
 
   const skeletonItems = useMemo<number[]>(() => [1, 2, 3, 4], []);
 
@@ -52,9 +56,21 @@ function DashboardPage() {
   const handleCreate = (room: any) => {
     if (!isAuthenticated) {
       setIsAuthOpen(true);
+      setToastSeverity('warning');
+      setToastMessage('Você precisa estar logado para criar uma sala.');
       return;
     }
-    createRoomMutation.mutate(room);
+    createRoomMutation.mutate(room, {
+      onSuccess: () => {
+        setToastSeverity('success');
+        setToastMessage('Sala criada com sucesso! 🚀');
+        setIsCreateOpen(false);
+      },
+      onError: (error: any) => {
+        setToastSeverity('error');
+        setToastMessage(`Erro ao criar sala: ${error.message || 'tente novamente.'}`);
+      }
+    });
   };
 
   const filteredRooms = useMemo(() => {
@@ -200,7 +216,14 @@ function DashboardPage() {
                   height: 'fit-content',
                 }}
               >
-                <RoomCardComponent room={room} />
+                <RoomCardComponent 
+                  room={room} 
+                  onAuthRequired={() => {
+                    setIsAuthOpen(true);
+                    setToastSeverity('warning');
+                    setToastMessage('Você precisa estar logado para entrar em uma sala.');
+                  }}
+                />
               </Box>
             ))}
           </Box>
@@ -210,6 +233,17 @@ function DashboardPage() {
         <CreateRoomModal open={isCreateOpen} onClose={() => setIsCreateOpen(false)} onCreate={handleCreate} />
         <AuthModal open={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       </Container>
+
+      <Snackbar
+        open={Boolean(toastMessage)}
+        autoHideDuration={4000}
+        onClose={() => setToastMessage(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setToastMessage(null)} severity={toastSeverity} sx={{ width: '100%' }}>
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

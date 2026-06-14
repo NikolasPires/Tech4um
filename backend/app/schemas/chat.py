@@ -15,6 +15,7 @@ class RoomResponse(BaseModel):
     description: Optional[str] = None
     created_by: int
     created_at: datetime
+    featured: bool = False
 
     model_config = {
         "from_attributes": True,

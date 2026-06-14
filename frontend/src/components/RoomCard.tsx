@@ -15,14 +15,21 @@ export type RoomCardData = {
   size: 'large' | 'small';
 };
 
-export default function RoomCard({ room }: { room: RoomCardData }) {
+export default function RoomCard({ room, onAuthRequired }: { room: RoomCardData; onAuthRequired?: () => void }) {
   const theme = useTheme();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const addParticipantMutation = useAddRoomParticipant();
 
   const handleCardClick = async () => {
-    if (isAuthenticated && user) {
+    if (!isAuthenticated) {
+      if (onAuthRequired) {
+        onAuthRequired();
+      }
+      return;
+    }
+
+    if (user) {
       try {
         await addParticipantMutation.mutateAsync({
           roomId: Number(room.id),

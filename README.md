@@ -10,8 +10,9 @@ O **Tech4um** é um fórum tecnológico em tempo real projetado para criar um am
 - Dashboard de fóruns
 - Criação de salas
 - Chat em tempo real e Mensagens Privadas
-- Arquitetura Frontend que proporciona desenvolimento ágil (Definição de Temas e Componentização)
-- Criação de hooks perfomáticos com Tanstack Query
+- Testes automatizados (Testes de integração)
+- Arquitetura Frontend que proporciona desenvolvimento ágil (Definição de Temas e Componentização)
+- Criação de hooks performáticos com Tanstack Query
 - Facilidade de Execução de Ambiente com Containers Docker
 
 
@@ -157,6 +158,35 @@ Sempre execute os comandos do Alembic de dentro da pasta `backend`:
 - **Reverter última migração:** `alembic downgrade -1`
 - **Criar nova migração automaticamente:** `alembic revision --autogenerate -m "descricao_da_mudanca"`
 - **Verificar histórico de migrações:** `alembic history`
+
+---
+
+## 🧪 Testes Automatizados
+
+O projeto conta com testes de integração automatizados para garantir a estabilidade e a corretude das regras de negócio do sistema.
+
+### O que o teste valida?
+O arquivo de teste [test_featured.py](file:///home/nikolas/Tech4um/backend/tests/test_featured.py) valida ponta a ponta a funcionalidade do algoritmo de "Tópico em Destaque":
+- Cria múltiplos fóruns/salas temporárias na base de dados de testes.
+- Distribui o volume de mensagens de maneira desigual entre as salas nas últimas 24 horas.
+- Faz requisições HTTP reais de listagem de salas contra o app FastAPI usando `httpx.AsyncClient`.
+- Garante que a API responde com a flag `featured: true` exatamente para as **3 salas mais ativas**.
+- Confirma que as salas menos ativas ou recém-criadas permanecem sem destaque (`featured: false`).
+
+### Como executar os testes?
+
+#### Utilizando Docker (Recomendado):
+Execute o comando abaixo diretamente no terminal do seu host:
+```bash
+docker exec tech4um-app bash -c "cd /app/backend && PYTHONPATH=. /app/.venv/bin/pytest"
+```
+
+#### Executando Localmente (Sem Docker):
+Com o ambiente virtual ativo no diretório `/backend`:
+```bash
+cd backend
+PYTHONPATH=. pytest
+```
 
 ---
 

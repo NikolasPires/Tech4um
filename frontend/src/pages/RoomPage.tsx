@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Box, Button, Container, Grid } from '@mui/material';
+import { Box, Button, Container, Grid, Snackbar, Alert } from '@mui/material';
 import { ArrowBackIosNew } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
@@ -47,6 +47,8 @@ export default function RoomPage() {
   const [privateRecipient, setPrivateRecipient] = useState<string | null>(null);
   const [isPrivateMode, setIsPrivateMode] = useState(false);
   const { data: users = [] } = useUsersGet();
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastSeverity, setToastSeverity] = useState<'success' | 'error' | 'warning' | 'info'>('warning');
 
   const roomsWithCreators = useMemo(() => {
       return rooms.map((room) => {
@@ -260,10 +262,25 @@ export default function RoomPage() {
               suggestedRooms={roomsWithCreators}
               roomId={String(roomId)}
               onNavigate={(targetRoomId) => navigate(`/room/${targetRoomId}`)}
+              onError={(msg) => {
+                setToastSeverity('error');
+                setToastMessage(msg);
+              }}
             />
           </Grid>
         </Grid>
       </Container>
+
+      <Snackbar
+        open={Boolean(toastMessage)}
+        autoHideDuration={4000}
+        onClose={() => setToastMessage(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setToastMessage(null)} severity={toastSeverity} sx={{ width: '100%' }}>
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

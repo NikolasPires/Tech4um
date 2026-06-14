@@ -134,16 +134,20 @@ export function RoomChatPanel({
   onTypingStatusChange,
 }: RoomChatPanelProps) {
   
-  const typingTimeoutRef = useRef<any | null>(null);
-  const isCurrentlyTypingRef = useRef(false);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null); // Referência para scroll automático
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Função para rolar o chat para baixo
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
   };
 
-  // Faz o scroll rolar quando chegam novas mensagens ou quando alguém começa a digitar
+  const typingTimeoutRef = useRef<any | null>(null);
+  const isCurrentlyTypingRef = useRef(false);
   useEffect(() => {
     scrollToBottom();
   }, [visibleMessages, typingUser]);
@@ -208,6 +212,7 @@ export function RoomChatPanel({
       <Divider sx={{ flexShrink: 0 }} />
 
       <Box 
+        ref={messagesContainerRef}
         sx={{ 
           flexGrow: 1, 
           overflowY: 'auto', 
@@ -289,9 +294,6 @@ export function RoomChatPanel({
               </Typography>
             </Card>
           )}
-
-          {/* Elemento invisível para ancorar o fim das mensagens */}
-          <div ref={messagesEndRef} />
         </Stack>
       </Box>
 
@@ -368,9 +370,10 @@ type RoomSidebarProps = {
   suggestedRooms: SuggestedRoom[];
   roomId: string;
   onNavigate: (roomId: string) => void;
+  onError?: (message: string) => void;
 };
 
-export function RoomSidebar({ suggestedRooms, roomId, onNavigate }: RoomSidebarProps) {
+export function RoomSidebar({ suggestedRooms, roomId, onNavigate, onError }: RoomSidebarProps) {
   const useAddParticipantMutation = useAddRoomParticipant();
   const user = useAuth().user;
 
@@ -383,6 +386,9 @@ export function RoomSidebar({ suggestedRooms, roomId, onNavigate }: RoomSidebarP
         });
       } catch (err) {
         console.error('Failed to add participant to clicked room:', err);
+        if (onError) {
+          onError('Falha ao entrar na sala sugerida. Tente novamente.');
+        }
       }
     }
     onNavigate(targetRoomId);

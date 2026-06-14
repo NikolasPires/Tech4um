@@ -55,13 +55,14 @@ const mapRoomToDetail = (room: {
   description: string | null;
   created_by: number;
   created_at: string;
+  featured?: boolean;
 }) => ({
   id: String(room.id),
   title: room.name,
   description: room.description ?? '',
   creator: `Usuário ${room.created_by}`,
   creatorId: room.created_by,
-  featured: new Date(room.created_at).getTime() >= Date.now() - 24 * 60 * 60 * 1000,
+  featured: room.featured ?? false,
   size: computeRoomSize(room.name, room.description ?? ''),
 });
 

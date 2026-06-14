@@ -21,7 +21,19 @@ class ChatController:
         return await self.repository.get_room_messages(room_id, current_user_id, limit=limit, offset=offset)
 
     async def get_room(self, room_id: int):
-        return await self.repository.get_room_by_id(room_id)
+        room = await self.repository.get_room_by_id(room_id)
+        if room is None:
+            return None
+
+        featured_ids = await self.repository.get_featured_room_ids()
+        return {
+            "id": room.id,
+            "name": room.name,
+            "description": room.description,
+            "created_by": room.created_by,
+            "created_at": room.created_at,
+            "featured": room.id in featured_ids,
+        }
 
     async def list_room_participants(self, room_id: int):
         room = await self.repository.get_room_by_id(room_id)
@@ -43,6 +55,7 @@ class ChatController:
 
     async def list_rooms(self, limit: int = 20, offset: int = 0):
         rooms = await self.repository.list_rooms(limit=limit, offset=offset)
+        featured_ids = await self.repository.get_featured_room_ids()
 
         return [
             {
@@ -52,6 +65,7 @@ class ChatController:
                 "created_by": room.created_by,
                 "created_at": room.created_at,
                 "members": members,
+                "featured": room.id in featured_ids,
             }
             for room, members in rooms
         ]
