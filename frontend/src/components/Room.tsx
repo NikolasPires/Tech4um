@@ -16,6 +16,7 @@ export type Message = {
   isPrivate: boolean;
   recipient?: string;
   self?: boolean;
+  created_at?: string;
 };
 
 export type Participant = {
@@ -105,6 +106,24 @@ export function RoomParticipantsPanel({ participants, onSelectRecipient }: RoomP
     </Card>
   );
 }
+
+const getGroupLabel = (date: Date) => {
+  if (!date || isNaN(date.getTime())) return 'Hoje';
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) {
+    return 'Hoje';
+  } else if (date.toDateString() === yesterday.toDateString()) {
+    return 'Ontem';
+  } else {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+};
 
 type RoomChatPanelProps = {
   currentUser: string;
@@ -223,58 +242,87 @@ export function RoomChatPanel({
         }}
       >
         <Stack spacing={'16px'} sx={{ width: '100%' }}>
-          {visibleMessages.map((message) => {
-            const isOwn = message.author === currentUser;
-            const isPrivateVisible = message.isPrivate && (message.author === currentUser || message.recipient === currentUser);
+          {(() => {
+            let lastGroupLabel = '';
+            return visibleMessages.map((message) => {
+              const isOwn = message.author === currentUser;
+              const isPrivateVisible = message.isPrivate && (message.author === currentUser || message.recipient === currentUser);
 
-            return (
-              <Box
-                key={message.id}
-                sx={{
-                  display: 'flex',
-                  gap: '16px',
-                  alignItems: 'center',
-                  justifyContent: isOwn ? 'flex-end' : 'flex-start',
-                }}
-              >
-                <Avatar alt={message.author} src={message.avatar} sx={{ width: '40px', height: '40px' }} />
-                <Box
-                  sx={{
-                    maxWidth: '100%',
-                    bgcolor: 'background.paper',
-                    color: 'text.primary',
-                    borderRadius: '12px',
-                    p: '16px',
-                    boxShadow: '0px 12px 24px rgba(0,0,0,0.04)',
-                    width: '100%',
-                  }}
-                >
-                  <Stack spacing={'4px'}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography variant="labelMedium" sx={{ fontWeight: 700 }}>
-                        {isOwn ? 'Você' : message.author}{' '}
-                        {message.isPrivate && isPrivateVisible && (
-                          <Typography
-                            component="span"
-                            variant="labelMedium"
-                            sx={{ color: isOwn ? 'warning.main' : 'primary.main', fontWeight: 700, ml: '8px' }}
-                          >
-                            mensagem privada
+              const messageDate = message.created_at ? new Date(message.created_at) : new Date();
+              const groupLabel = getGroupLabel(messageDate);
+              const showDateHeader = groupLabel !== lastGroupLabel;
+              lastGroupLabel = groupLabel;
+
+              return (
+                <Box key={message.id} sx={{ width: '100%' }}>
+                  {showDateHeader && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', my: '24px', position: 'relative', alignItems: 'center' }}>
+                      <Divider sx={{ position: 'absolute', width: '100%', zIndex: 1 }} />
+                      <Chip 
+                        label={groupLabel} 
+                        size="small" 
+                        sx={{ 
+                          bgcolor: 'background.paper', 
+                          border: '1px solid rgba(0, 0, 0, 0.08)',
+                          color: 'gray.main', 
+                          fontWeight: 600,
+                          fontSize: '12px',
+                          px: '12px',
+                          zIndex: 2
+                        }} 
+                      />
+                    </Box>
+                  )}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      gap: '16px',
+                      alignItems: 'center',
+                      justifyContent: isOwn ? 'flex-end' : 'flex-start',
+                      mt: '8px',
+                      width: '100%'
+                    }}
+                  >
+                    <Avatar alt={message.author} src={message.avatar} sx={{ width: '40px', height: '40px' }} />
+                    <Box
+                      sx={{
+                        maxWidth: '100%',
+                        bgcolor: 'background.paper',
+                        color: 'text.primary',
+                        borderRadius: '12px',
+                        p: '16px',
+                        boxShadow: '0px 12px 24px rgba(0,0,0,0.04)',
+                        width: '100%',
+                      }}
+                    >
+                      <Stack spacing={'4px'}>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                          <Typography variant="labelMedium" sx={{ fontWeight: 700 }}>
+                            {isOwn ? 'Você' : message.author}{' '}
+                            {message.isPrivate && isPrivateVisible && (
+                              <Typography
+                                component="span"
+                                variant="labelMedium"
+                                sx={{ color: isOwn ? 'warning.main' : 'primary.main', fontWeight: 700, ml: '8px' }}
+                              >
+                                mensagem privada
+                              </Typography>
+                            )}
                           </Typography>
-                        )}
-                      </Typography>
-                      <Typography variant="labelSmall" sx={{ color: 'gray.main' }}>
-                        {message.time}
-                      </Typography>
-                    </Stack>
-                    <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                      {message.content}
-                    </Typography>
-                  </Stack>
+                          <Typography variant="labelSmall" sx={{ color: 'gray.main' }}>
+                            {message.time}
+                          </Typography>
+                        </Stack>
+                        <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                          {message.content}
+                        </Typography>
+                      </Stack>
+                    </Box>
+                  </Box>
                 </Box>
-              </Box>
-            );
-          })}
+              );
+            });
+          })()}
 
           {typingUser && (
             <Card 

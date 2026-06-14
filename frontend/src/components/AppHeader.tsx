@@ -19,6 +19,21 @@ export default function AppHeader({ title, subtitle, user, isLoading, onLogin, o
       .toUpperCase()
       .slice(0, 2);
 
+  const avatarColors = [
+    '#4E79A7', '#F28E2B', '#E15759', '#76B7B2', '#59A14F',
+    '#EDC948', '#B07AA1', '#FF9DA7', '#9C755F', '#BAB0AC',
+    '#6A5ACD', '#20B2AA', '#FF7F50', '#9370DB'
+  ];
+
+  const stringToColor = (name: string) => {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % avatarColors.length;
+    return avatarColors[index];
+  };
+
   return (
     <AppBar position="static" color="transparent" elevation={0} sx={{ mb: 4, py: 2, boxShadow: '0px 2px 4px rgba(0,0,0,0.1)' }}>
       <Container maxWidth="xl">
@@ -43,7 +58,7 @@ export default function AppHeader({ title, subtitle, user, isLoading, onLogin, o
                     {user.email}
                   </Typography>
                 </Box>
-                <Avatar sx={{ bgcolor: 'primary.dark', cursor: 'pointer' }}>
+                <Avatar sx={{ bgcolor: stringToColor(user.name), cursor: 'pointer' }}>
                   {getInitials(user.name)}
                 </Avatar>
                 <Button onClick={onLogout} sx={{ color: 'text.secondary', textTransform: 'none' }}>

@@ -20,8 +20,36 @@ import {
 } from '../components/Room';
 import { useRoomSocket } from '../hooks/useRoomSocket';
 import { useUsersGet } from '../hooks/useUsers';
-const getPlaceholderAvatar = (name: string) =>
-  `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff&length=2`;
+const avatarColors = [
+  '4E79A7', // Steel Blue
+  'F28E2B', // Orange
+  'E15759', // Muted Red
+  '76B7B2', // Teal
+  '59A14F', // Green
+  'EDC948', // Yellow
+  'B07AA1', // Muted Purple
+  'FF9DA7', // Pink
+  '9C755F', // Brown
+  'BAB0AC', // Slate Gray
+  '6A5ACD', // Slate Blue
+  '20B2AA', // Light Sea Green
+  'FF7F50', // Muted Coral
+  '9370DB', // Medium Purple
+];
+
+const stringToColor = (name: string) => {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % avatarColors.length;
+  return avatarColors[index];
+};
+
+const getPlaceholderAvatar = (name: string) => {
+  const bg = stringToColor(name);
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${bg}&color=fff&length=2&bold=true`;
+};
 
 export default function RoomPage() {
   const navigate = useNavigate();
@@ -159,6 +187,7 @@ export default function RoomPage() {
           isPrivate: Boolean(message.recipient_id),
           recipient,
           self: message.user_id === user?.id,
+          created_at: message.created_at,
         };
       }),
     [liveMessages, participants, user]
