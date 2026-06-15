@@ -14,6 +14,7 @@ O **Tech4um** é um fórum tecnológico em tempo real projetado para criar um am
 - Arquitetura Frontend que proporciona desenvolvimento ágil (Definição de Temas e Componentização)
 - Criação de hooks performáticos com Tanstack Query
 - Facilidade de Execução de Ambiente com Containers Docker
+- Arquitetura em Camadas (Mix de MVC e Clean Code)
 
 
 ## 🏗️ Arquitetura e Tecnologias
