@@ -1,5 +1,6 @@
 from collections import defaultdict
-
+import asyncio
+import json
 from fastapi import (
     APIRouter,
     Depends,
@@ -28,211 +29,43 @@ from app.schemas.chat import (
     RoomParticipantResponse,
     RoomResponse,
 )
-
+import redis.asyncio as aioredis
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
-class ConnectionManager:
-    def __init__(self):
-        # room_id -> user_id -> websocket
-        self.active_connections: dict[int, dict[int, WebSocket]] = defaultdict(dict)
-
-    async def connect(
-        self,
-        websocket: WebSocket,
-        room_id: int,
-        user_id: int,
-    ):
-        await websocket.accept()
-        self.active_connections[room_id][user_id] = websocket
-
-    def disconnect(
-        self,
-        room_id: int,
-        user_id: int,
-    ):
-        room_connections = self.active_connections.get(room_id)
-
-        if room_connections:
-            room_connections.pop(user_id, None)
-
-            if not room_connections:
-                self.active_connections.pop(room_id, None)
-
-    async def send_to_user(
-        self,
-        room_id: int,
-        user_id: int,
-        message: dict,
-    ):
-        websocket = self.active_connections.get(room_id, {}).get(user_id)
-
-        if websocket:
-            await websocket.send_json(message)
-
-    async def broadcast_room(
-        self,
-        room_id: int,
-        message: dict,
-    ):
-        room_connections = self.active_connections.get(room_id, {})
-
-        for websocket in room_connections.values():
-            await websocket.send_json(message)
-
-    async def broadcast_room_exclude(
-        self,
-        room_id: int,
-        exclude_user_id: int,
-        message: dict,
-    ):
-        room_connections = self.active_connections.get(room_id, {})
-        for user_id, websocket in room_connections.items():
-            if user_id != exclude_user_id:
-                await websocket.send_json(message)
+@router.post("/rooms/{room_id}/ticket")
+async def get_websocket_ticket(
+    room_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    current_user = Depends(get_current_user),
+):
+    try:
+        from app.controllers.websocket_controller import WebSocketController
+        controller = WebSocketController(db)
+        ticket = await controller.generate_ticket(
+            user_id=current_user.id,
+            room_id=room_id,
+            username=current_user.username
+        )
+        return {"ticket": ticket}
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
-manager = ConnectionManager()
-
-
-@router.websocket("/ws/rooms/{room_id}")
+@router.websocket("/ws/rooms/{room_id}/{ticket}")
 async def websocket_room(
     websocket: WebSocket,
     room_id: int,
-    token: str = Query(...),
+    ticket: str,
 ):
     db = AsyncSessionLocal()
-
     try:
-        try:
-            username = decode_access_token(token)
-        except Exception:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-            return
-
-        result = await db.execute(select(User).filter(User.username == username))
-        user = result.scalar_one_or_none()
-        if not user:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-            return
-
-        user_id = user.id
-        repository = ChatRepository(db)
-
-        participant = await repository.get_participant(
-            room_id,
-            user_id,
-        )
-
-        if not participant:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-            return
-
-        await manager.connect(
-            websocket,
-            room_id,
-            user_id,
-        )
-        await manager.broadcast_room(
-            room_id,
-            {
-                "event": "user_joined",
-                "user_id": user_id,
-            },
-        )
-
-        while True:
-            payload = await websocket.receive_json()
-            event_type = payload.get("event")
-
-            if event_type == "typing_status":
-                is_typing = payload.get("is_typing", False)
-                recipient_id = payload.get("recipient_id")
-
-                response = {
-                    "event": "user_typing",
-                    "user_id": user_id,
-                    "is_typing": is_typing,
-                    "recipient_id": recipient_id
-                }
-
-                if recipient_id is not None:
-                    # Se for privado, avisa apenas o destinatário específico
-                    await manager.send_to_user(room_id, recipient_id, response)
-                else:
-                    # Se for público, avisa a sala toda (menos quem está digitando)
-                    await manager.broadcast_room_exclude(room_id, user_id, response)
-                
-                continue # Pula para a próxima iteração do loop
-
-            message_text = payload["message"]
-            recipient_id = payload.get("recipient_id")
-
-            message_create = MessageCreate(
-                room_id=room_id,
-                message=message_text,
-                recipient_id=recipient_id,
-            )
-
-            saved_message = await ChatController(
-                db
-            ).create_message(
-                message_create,
-                user_id,
-            )
-
-            response = {
-                "event": "new_message",
-                "id": saved_message.id,
-                "room_id": room_id,
-                "user_id": user_id,
-                "recipient_id": recipient_id,
-                "message": saved_message.message,
-                "created_at": saved_message.created_at.isoformat(),
-            }
-
-            # mensagem privada
-            if recipient_id is not None:
-                recipient_participant = await repository.get_participant(
-                    room_id,
-                    recipient_id,
-                )
-
-                if recipient_participant:
-                    await manager.send_to_user(
-                        room_id,
-                        recipient_id,
-                        response,
-                    )
-
-                # devolve para quem enviou
-                await manager.send_to_user(
-                    room_id,
-                    user_id,
-                    response,
-                )
-
-            # mensagem pública
-            else:
-                await manager.broadcast_room(
-                    room_id,
-                    response,
-                )
-
-    except WebSocketDisconnect:
-        manager.disconnect(
-            room_id,
-            user_id,
-        )
-
-        await manager.broadcast_room(
-            room_id,
-            {
-                "event": "user_left",
-                "user_id": user_id,
-            },
-        )
-
+        from app.controllers.websocket_controller import WebSocketController
+        controller = WebSocketController(db)
+        await controller.handle_connection(websocket, room_id, ticket)
     finally:
         await db.close()
 

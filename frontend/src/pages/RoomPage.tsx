@@ -76,7 +76,32 @@ export default function RoomPage() {
   const [isPrivateMode, setIsPrivateMode] = useState(false);
   const { data: users = [] } = useUsersGet();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [onlineUserIds, setOnlineUserIds] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    if (participants.length > 0) {
+      const onlineIds = new Set<number>();
+      participants.forEach((p) => {
+        if (p.is_online) {
+          onlineIds.add(p.user_id);
+        }
+      });
+      setOnlineUserIds(onlineIds);
+    }
+  }, [participants]);
   const [toastSeverity, setToastSeverity] = useState<'success' | 'error' | 'warning' | 'info'>('warning');
+
+  const participantList = useMemo(
+    () =>
+      participants.map((participant) => ({
+        user_id: participant.user_id,
+        name: participant.name,
+        role: participant.is_creator ? 'Criador' : 'Participante',
+        avatar: getPlaceholderAvatar(participant.name),
+        online: onlineUserIds.has(participant.user_id),
+      })),
+    [participants, onlineUserIds]
+  );
 
   const roomsWithCreators = useMemo(() => {
       return rooms.map((room) => {
@@ -103,6 +128,7 @@ export default function RoomPage() {
     if (!latest) return;
 
     if (latest.event === 'user_typing') {
+      if (latest.room_id !== undefined && latest.room_id !== roomId) return;
       if (latest.is_typing) {
         // Procura o nome do participante correspondente ao user_id recebido
         const tycoon = participantList.find((p) => p.user_id === latest.user_id);
@@ -113,7 +139,32 @@ export default function RoomPage() {
       return; // Encerra aqui para não misturar com o fluxo de novas mensagens
     }
 
+    if (latest.event === 'user_online') {
+      setOnlineUserIds((prev) => {
+        const next = new Set(prev);
+        if (latest.user_id) next.add(latest.user_id);
+        return next;
+      });
+      return;
+    }
+
+    if (latest.event === 'user_offline') {
+      setOnlineUserIds((prev) => {
+        const next = new Set(prev);
+        if (latest.user_id) next.delete(latest.user_id);
+        return next;
+      });
+      return;
+    }
+
+    if (latest.event === 'private_message_notification') {
+      setToastSeverity('info');
+      setToastMessage(`O usuário ${latest.sender_name} lhe enviou uma mensagem privada na sala ${latest.room_name}`);
+      return;
+    }
+
     if (latest.event !== 'new_message') return;
+    if (latest.room_id !== roomId) return;
 
     setLiveMessages((current) => {
       const alreadyExists = current.some(
@@ -140,19 +191,9 @@ export default function RoomPage() {
         },
       ];
     });
-  }, [socketMessages]);
+  }, [socketMessages, participantList]);
 
-  const participantList = useMemo(
-  () =>
-    participants.map((participant) => ({
-      user_id: participant.user_id,
-      name: participant.name,
-      role: participant.is_creator ? 'Criador' : 'Participante',
-      avatar: getPlaceholderAvatar(participant.name),
-      online: true,
-    })),
-  [participants]
-);
+
 
 
   const currentRoom = useMemo(

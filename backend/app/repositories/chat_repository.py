@@ -57,7 +57,9 @@ class ChatRepository:
 
     async def get_participant(self, room_id: int, user_id: int) -> Participant | None:
         result = await self.db.execute(
-            select(Participant).filter_by(room_id=room_id, user_id=user_id)
+            select(Participant)
+            .options(selectinload(Participant.user))
+            .filter_by(room_id=room_id, user_id=user_id)
         )
         return result.scalar_one_or_none()
 

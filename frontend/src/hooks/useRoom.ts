@@ -9,6 +9,7 @@ export type RoomParticipantResponse = {
   username: string;
   email: string;
   is_creator: boolean;
+  is_online?: boolean;
 };
 
 export type RoomMessageResponse = {
