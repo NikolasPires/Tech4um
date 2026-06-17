@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import WebSocket, status
+from fastapi import WebSocket, status, WebSocketDisconnect
 from app.repositories.websocket_repository import WebSocketRepository, ws_repository
 from app.repositories.chat_repository import ChatRepository
 from app.schemas.chat import MessageCreate
@@ -136,6 +136,9 @@ class WebSocketController:
                     # Publica para todos os membros no canal da sala
                     await self.ws_repo.publish_to_room(room_id, response)
 
+        except WebSocketDisconnect:
+            # Desconexão normal do cliente (ex: fechou a aba ou timeout de proxy)
+            pass
         except Exception as e:
             import traceback
             print(f"[WS CONTROLLER] Error in handle_connection: {e}", flush=True)
@@ -171,6 +174,9 @@ class WebSocketController:
         try:
             while True:
                 await websocket.receive_text()
+        except WebSocketDisconnect:
+            # Desconexão normal do cliente
+            pass
         except Exception as e:
             print(f"[WS CONTROLLER] Error in handle_notification_connection: {e}", flush=True)
         finally:
