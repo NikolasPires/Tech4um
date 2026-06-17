@@ -41,17 +41,22 @@ class ChatController:
             raise ValueError('Room not found')
 
         participants = await self.repository.list_room_participants(room_id)
-        return [
-            {
+        
+        from app.repositories.websocket_repository import ws_repository
+        
+        results = []
+        for participant in participants:
+            is_online = await ws_repository.is_user_online(participant.user_id)
+            results.append({
                 'user_id': participant.user_id,
                 'room_id': participant.room_id,
                 'name': participant.user.name,
                 'username': participant.user.username,
                 'email': participant.user.email,
                 'is_creator': participant.user_id == room.created_by,
-            }
-            for participant in participants
-        ]
+                'is_online': is_online,
+            })
+        return results
 
     async def list_rooms(self, limit: int = 20, offset: int = 0):
         rooms = await self.repository.list_rooms(limit=limit, offset=offset)

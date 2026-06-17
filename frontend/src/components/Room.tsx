@@ -1,4 +1,4 @@
-import { Avatar, Box, Button, Card, CardContent, Divider, IconButton, InputAdornment, Stack, TextField, Tooltip, Typography, Chip } from '@mui/material';
+import { Avatar, Box, Badge, Button, Card, CardContent, Divider, IconButton, InputAdornment, Stack, TextField, Tooltip, Typography, Chip } from '@mui/material';
 import { ChatBubbleOutline, Send, People } from '@mui/icons-material';
 import InsertEmoticonIcon from '@mui/icons-material/InsertEmoticon';
 import InsertPhotoOutlinedIcon from '@mui/icons-material/InsertPhotoOutlined';
@@ -84,7 +84,44 @@ export function RoomParticipantsPanel({ participants, onSelectRecipient }: RoomP
                   },
                 }}
               >
-                <Avatar alt={participant.name} src={participant.avatar} />
+                <Badge
+                  overlap="circular"
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                  variant="dot"
+                  sx={{
+                    '& .MuiBadge-badge': {
+                      backgroundColor: participant.online ? '#44b700' : '#bdbdbd',
+                      color: participant.online ? '#44b700' : '#bdbdbd',
+                      boxShadow: '0 0 0 2px #fff',
+                      width: '12px',
+                      height: '12px',
+                      borderRadius: '50%',
+                      '&::after': participant.online ? {
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        borderRadius: '50%',
+                        animation: 'ripple 1.2s infinite ease-in-out',
+                        border: '1px solid currentColor',
+                        content: '""',
+                      } : {},
+                    },
+                    '@keyframes ripple': {
+                      '0%': {
+                        transform: 'scale(.8)',
+                        opacity: 1,
+                      },
+                      '100%': {
+                        transform: 'scale(2.4)',
+                        opacity: 0,
+                      },
+                    },
+                  }}
+                >
+                  <Avatar alt={participant.name} src={participant.avatar} />
+                </Badge>
                 <Box sx={{ minWidth: 0, flexGrow: 1 }}>
                   <Typography variant="body1" sx={{ fontWeight: 700 }}>
                     {participant.name}

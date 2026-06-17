@@ -44,6 +44,7 @@ class RoomParticipantResponse(BaseModel):
     username: str
     email: str
     is_creator: bool
+    is_online: bool = False
 
     model_config = {
         "from_attributes": True,

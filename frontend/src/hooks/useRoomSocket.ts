@@ -5,7 +5,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 const API_BASE_URL = ((import.meta as any).env.VITE_API_BASE_URL as string | undefined) ?? '';
 
 export type SocketMessage = {
-  event: 'new_message' | 'user_joined' | 'user_left' | 'user_typing';
+  event:
+    | 'new_message'
+    | 'user_joined'
+    | 'user_left'
+    | 'user_typing'
+    | 'user_online'
+    | 'user_offline'
+    | 'private_message_notification';
   id?: number;
   room_id?: number;
   sender_id?: number;
@@ -15,6 +22,8 @@ export type SocketMessage = {
   message?: string;
   created_at?: string;
   is_typing?: boolean;
+  sender_name?: string;
+  room_name?: string;
 };
 
 type SendMessagePayload = {
@@ -36,37 +45,53 @@ export function useRoomSocket(
 
   const [messages, setMessages] = useState<SocketMessage[]>([]);
 
-  const connect = useCallback(() => {
-    const wsUrl = API_BASE_URL
-      .replace('http://', 'ws://')
-      .replace('https://', 'wss://');
-
+  const connect = useCallback(async () => {
     const token = localStorage.getItem('auth_token');
     if (!token) return;
 
-    const socket = new WebSocket(
-      `${wsUrl}/chat/ws/rooms/${roomId}?token=${encodeURIComponent(token)}`,
-    );
+    try {
+      const res = await fetch(`${API_BASE_URL}/chat/rooms/${roomId}/ticket`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-    socket.onopen = () => {
-      setConnected(true);
-    };
+      if (!res.ok) {
+        console.error('Failed to fetch websocket ticket');
+        return;
+      }
 
-    socket.onclose = () => {
-      setConnected(false);
-    };
+      const { ticket } = await res.json();
 
-    socket.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
+      const wsUrl = API_BASE_URL
+        .replace('http://', 'ws://')
+        .replace('https://', 'wss://');
 
-    socket.onmessage = (event) => {
-      const data: SocketMessage = JSON.parse(event.data);
+      const socket = new WebSocket(`${wsUrl}/chat/ws/rooms/${roomId}/${ticket}`);
 
-      setMessages((current) => [...current, data]);
-    };
+      socket.onopen = () => {
+        setConnected(true);
+      };
 
-    socketRef.current = socket;
+      socket.onclose = () => {
+        setConnected(false);
+      };
+
+      socket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+
+      socket.onmessage = (event) => {
+        const data: SocketMessage = JSON.parse(event.data);
+        setMessages((current) => [...current, data]);
+      };
+
+      socketRef.current = socket;
+    } catch (err) {
+      console.error('Error connecting to websocket:', err);
+    }
   }, [roomId]);
 
   const disconnect = useCallback(() => {

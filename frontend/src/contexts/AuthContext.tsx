@@ -131,7 +131,20 @@ export function AuthProvider({ children }: PropsWithChildren) {
     return login(email, password);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) {
+      try {
+        await fetch(`${API_BASE_URL}/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+      } catch (err) {
+        console.error('Failed to notify backend on logout:', err);
+      }
+    }
     localStorage.removeItem(TOKEN_KEY);
     setUser(null);
   };
