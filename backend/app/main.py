@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import sentry_sdk
 
 from app.core.config import ALLOWED_ORIGINS
 from app.routes import auth as auth_routes, users as user_routes, chat as chat_routes
@@ -16,6 +17,11 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[Lifespan] Error resetting Redis online keys: {e}", flush=True)
     yield
+
+sentry_sdk.init(
+    dsn="https://87da9e7b3630588da000661b0deef298@o4511582333108224.ingest.us.sentry.io/4511582334418944",
+    send_default_pii=True,
+)
 
 app = FastAPI(title="Tech4um API", lifespan=lifespan)
 

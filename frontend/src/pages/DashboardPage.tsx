@@ -14,9 +14,7 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-import Masonry from '@mui/lab/Masonry'; // Importação do Masonry para o efeito cascata
 import SearchIcon from '@mui/icons-material/Search';
-import { ArrowForward } from '@mui/icons-material';
 
 import RoomCardComponent from '../components/RoomCard';
 import AppHeader from '../components/AppHeader';
@@ -25,10 +23,7 @@ import AuthModal from '../components/AuthModal';
 import { useAuth } from '../contexts/AuthContext';
 import { useRoomsGet, useRoomsPost } from '../hooks/useRooms';
 import { useUsersGet } from '../hooks/useUsers';
-const layoutMap = {
-  large: { xs: 12, md: 6 },
-  small: { xs: 12, md: 3 },
-};
+
 function DashboardPage() {
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const { data: rooms = [], isLoading } = useRoomsGet();
