@@ -25,6 +25,60 @@ import { useRoomsGet, useRoomsPost } from '../hooks/useRooms';
 import { useUsersGet } from '../hooks/useUsers';
 import * as Sentry from '@sentry/react';
 
+function CrashingComponent(): JSX.Element {
+  throw new Error('Erro de renderização forçado para testar o Sentry!');
+  return <></>;
+}
+
+function ErrorButtons() {
+  const [shouldCrash, setShouldCrash] = useState(false);
+
+  if (shouldCrash) {
+    return <CrashingComponent />;
+  }
+
+  const handleCallbackError = () => {
+    const error = new Error('Erro de clique (callback) forçado para testar o Sentry!');
+    Sentry.captureException(error);
+    throw error;
+  };
+
+  return (
+    <Stack direction="row" spacing={1} sx={{ ml: 2 }}>
+      <Button
+        variant="outlined"
+        color="error"
+        onClick={handleCallbackError}
+        sx={{
+          borderRadius: '18px',
+          textTransform: 'none',
+          fontWeight: 600,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        Erro de Clique
+      </Button>
+      <Button
+        variant="contained"
+        color="error"
+        onClick={() => setShouldCrash(true)}
+        sx={{
+          borderRadius: '18px',
+          textTransform: 'none',
+          fontWeight: 600,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        Erro de Render
+      </Button>
+    </Stack>
+  );
+}
+
+const layoutMap = {
+  large: { xs: 12, md: 6 },
+  small: { xs: 12, md: 3 },
+};
 function DashboardPage() {
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const { data: rooms = [], isLoading } = useRoomsGet();
@@ -150,6 +204,7 @@ function DashboardPage() {
             >
               Ou crie seu próprio 4um
             </Button>
+            <ErrorButtons /> {/* Botões para testar o Sentry e Error Boundary */}
           </Grid>
         </Grid>
 

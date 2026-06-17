@@ -107,7 +107,7 @@ export const ErrorBoundaryFallback: React.FC<ErrorBoundaryFallbackProps> = ({
                 fontFamily: 'Poppins',
               }}
             >
-              O Tech4um encontrou um erro inesperado na renderização desta página.
+              O Tech4um encontrou um erro inesperado nesta página.
             </Typography>
           </Box>
 
@@ -157,67 +157,6 @@ export const ErrorBoundaryFallback: React.FC<ErrorBoundaryFallbackProps> = ({
               >
                 Voltar ao Início
               </Button>
-            </Box>
-
-            {/* Error Details Section */}
-            <Box
-              sx={{
-                borderTop: '1px solid #f1f5f9',
-                paddingTop: 2,
-                textAlign: 'left',
-              }}
-            >
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                }}
-                onClick={() => setShowDetails(!showDetails)}
-              >
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontWeight: 600,
-                    color: '#64748b',
-                    fontSize: '13px',
-                  }}
-                >
-                  Informações técnicas do erro
-                </Typography>
-                <IconButton
-                  size="small"
-                  sx={{
-                    transform: showDetails ? 'rotate(180deg)' : 'none',
-                    transition: 'transform 0.2s',
-                  }}
-                >
-                  <KeyboardArrowDownIcon />
-                </IconButton>
-              </Box>
-
-              <Collapse in={showDetails}>
-                <Box
-                  sx={{
-                    marginTop: 1.5,
-                    padding: 2,
-                    backgroundColor: '#f8fafc',
-                    borderRadius: '14px',
-                    border: '1px solid #e2e8f0',
-                    fontFamily: 'monospace',
-                    fontSize: '12px',
-                    color: '#e11d48',
-                    overflowX: 'auto',
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-all',
-                    maxHeight: '150px',
-                  }}
-                >
-                  {error.name}: {error.message}
-                </Box>
-              </Collapse>
             </Box>
           </CardContent>
         </Card>
