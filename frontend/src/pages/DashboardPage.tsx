@@ -150,7 +150,6 @@ function DashboardPage() {
             >
               Ou crie seu próprio 4um
             </Button>
-            <ErrorButtons /> {/* Botões para testar o Sentry e Error Boundary */}
           </Grid>
         </Grid>
 
