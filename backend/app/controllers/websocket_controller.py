@@ -16,6 +16,9 @@ class WebSocketController:
             raise ValueError("O usuário não é participante desta sala")
         return await self.ws_repo.generate_ticket(user_id, room_id, username)
 
+    async def generate_notification_ticket(self, user_id: int, username: str) -> str:
+        return await self.ws_repo.generate_ticket(user_id, room_id=0, username=username)
+
     async def handle_connection(self, websocket: WebSocket, room_id: int, ticket: str):
         # 1. Valida o ticket
         ticket_data = await self.ws_repo.validate_and_consume_ticket(ticket)
@@ -141,9 +144,6 @@ class WebSocketController:
             # Desconecta o WebSocket local
             await self.ws_repo.disconnect(websocket, room_id, user_id)
             
-            # Decrementa conexões globais no Redis
-            is_now_offline = await self.ws_repo.set_user_offline(user_id)
-            
             # Notifica que o usuário saiu do canal
             await self.ws_repo.publish_to_room(
                 room_id,
@@ -152,10 +152,38 @@ class WebSocketController:
                     "user_id": user_id,
                 }
             )
-            if is_now_offline:
-                # Notifica que ficou offline globalmente
+            await self._handle_user_offline(user_id)
+
+    async def handle_notification_connection(self, websocket: WebSocket, ticket: str):
+        ticket_data = await self.ws_repo.validate_and_consume_ticket(ticket)
+        if not ticket_data:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+
+        user_id = ticket_data["user_id"]
+        if ticket_data["room_id"] != 0:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+
+        await self.ws_repo.connect_notification(websocket, user_id)
+        await self.ws_repo.set_user_online(user_id)
+
+        try:
+            while True:
+                await websocket.receive_text()
+        except Exception as e:
+            print(f"[WS CONTROLLER] Error in handle_notification_connection: {e}", flush=True)
+        finally:
+            await self.ws_repo.disconnect_notification(websocket, user_id)
+            await self._handle_user_offline(user_id)
+
+    async def _handle_user_offline(self, user_id: int):
+        is_now_offline = await self.ws_repo.set_user_offline(user_id)
+        if is_now_offline:
+            room_ids = await self.chat_repo.get_user_room_ids(user_id)
+            for r_id in room_ids:
                 await self.ws_repo.publish_to_room(
-                    room_id,
+                    r_id,
                     {
                         "event": "user_offline",
                         "user_id": user_id,

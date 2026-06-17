@@ -16,6 +16,8 @@ class WebSocketRepository:
         )
         # local_connections[room_id][user_id] = [websocket1, websocket2, ...]
         self.local_connections: dict[int, dict[int, list[WebSocket]]] = defaultdict(dict)
+        # notification_connections[user_id] = [websocket1, websocket2, ...]
+        self.notification_connections: dict[int, list[WebSocket]] = defaultdict(list)
         self.room_tasks: dict[int, asyncio.Task] = {}
         self.user_tasks: dict[int, asyncio.Task] = {}
         self.room_ready_events: dict[int, asyncio.Event] = {}
@@ -70,6 +72,8 @@ class WebSocketRepository:
         for room_id, user_map in self.local_connections.items():
             if user_id in user_map:
                 websockets.extend(user_map[user_id])
+        if user_id in self.notification_connections:
+            websockets.extend(self.notification_connections[user_id])
         return websockets
 
     async def connect(self, websocket: WebSocket, room_id: int, user_id: int):
@@ -117,6 +121,36 @@ class WebSocketRepository:
                     room_task.cancel()
 
         # Se o usuário não tiver mais conexões ativas nesta instância
+        user_websockets = self.get_user_websockets(user_id)
+        if not user_websockets:
+            user_task = self.user_tasks.pop(user_id, None)
+            if user_task:
+                user_task.cancel()
+
+    async def connect_notification(self, websocket: WebSocket, user_id: int):
+        await websocket.accept()
+        self.notification_connections[user_id].append(websocket)
+
+        # Se for a primeira conexão do usuário nesta instância
+        user_websockets = self.get_user_websockets(user_id)
+        if len(user_websockets) == 1 and user_id not in self.user_tasks:
+            ready_event = asyncio.Event()
+            self.user_ready_events[user_id] = ready_event
+            self.user_tasks[user_id] = asyncio.create_task(self._listen_user_channel(user_id, ready_event))
+            try:
+                await asyncio.wait_for(ready_event.wait(), timeout=2.0)
+            except asyncio.TimeoutError:
+                pass
+            finally:
+                self.user_ready_events.pop(user_id, None)
+
+    async def disconnect_notification(self, websocket: WebSocket, user_id: int):
+        if user_id in self.notification_connections:
+            if websocket in self.notification_connections[user_id]:
+                self.notification_connections[user_id].remove(websocket)
+            if not self.notification_connections[user_id]:
+                self.notification_connections.pop(user_id, None)
+
         user_websockets = self.get_user_websockets(user_id)
         if not user_websockets:
             user_task = self.user_tasks.pop(user_id, None)

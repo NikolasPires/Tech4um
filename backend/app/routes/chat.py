@@ -70,6 +70,40 @@ async def websocket_room(
         await db.close()
 
 
+@router.post("/notifications/ticket")
+async def get_notification_ticket(
+    db: AsyncSession = Depends(get_async_db),
+    current_user = Depends(get_current_user),
+):
+    try:
+        from app.controllers.websocket_controller import WebSocketController
+        controller = WebSocketController(db)
+        ticket = await controller.generate_notification_ticket(
+            user_id=current_user.id,
+            username=current_user.username
+        )
+        return {"ticket": ticket}
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.websocket("/ws/notifications/{ticket}")
+async def websocket_notifications(
+    websocket: WebSocket,
+    ticket: str,
+):
+    db = AsyncSessionLocal()
+    try:
+        from app.controllers.websocket_controller import WebSocketController
+        controller = WebSocketController(db)
+        await controller.handle_notification_connection(websocket, ticket)
+    finally:
+        await db.close()
+
+
 @router.post(
     "/rooms",
     response_model=RoomResponse,

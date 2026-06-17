@@ -125,3 +125,9 @@ class ChatRepository:
             .limit(3)
         )
         return [row[0] for row in result.all()]
+
+    async def get_user_room_ids(self, user_id: int) -> List[int]:
+        result = await self.db.execute(
+            select(Participant.room_id).filter_by(user_id=user_id)
+        )
+        return list(result.scalars().all())

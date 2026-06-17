@@ -157,11 +157,6 @@ export default function RoomPage() {
       return;
     }
 
-    if (latest.event === 'private_message_notification') {
-      setToastSeverity('info');
-      setToastMessage(`O usuário ${latest.sender_name} lhe enviou uma mensagem privada na sala ${latest.room_name}`);
-      return;
-    }
 
     if (latest.event !== 'new_message') return;
     if (latest.room_id !== roomId) return;

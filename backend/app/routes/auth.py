@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import security
 from app.core.config import ACCESS_TOKEN_EXPIRE_MINUTES
-from app.core.deps import get_async_db
+from app.core.deps import get_async_db, get_current_user
 from app.repositories.user_repository import UserRepository
 from app.schemas.user import Token
 
@@ -57,3 +57,32 @@ async def login_with_email(
         subject=user.username, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/logout")
+async def logout(
+    db: AsyncSession = Depends(get_async_db),
+    current_user = Depends(get_current_user),
+):
+    try:
+        from app.repositories.websocket_repository import ws_repository
+        from app.repositories.chat_repository import ChatRepository
+
+        # Forçar a remoção do status online no Redis
+        await ws_repository.redis.srem("online_users", str(current_user.id))
+        await ws_repository.redis.delete(f"user_online_count:{current_user.id}")
+
+        # Enviar evento user_offline para todas as salas
+        chat_repo = ChatRepository(db)
+        room_ids = await chat_repo.get_user_room_ids(current_user.id)
+        for r_id in room_ids:
+            await ws_repository.publish_to_room(
+                r_id,
+                {
+                    "event": "user_offline",
+                    "user_id": current_user.id,
+                }
+            )
+    except Exception as e:
+        print(f"Error executing logout in backend: {e}", flush=True)
+    return {"status": "ok"}
