@@ -14,9 +14,7 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-import Masonry from '@mui/lab/Masonry'; // Importação do Masonry para o efeito cascata
 import SearchIcon from '@mui/icons-material/Search';
-import { ArrowForward } from '@mui/icons-material';
 
 import RoomCardComponent from '../components/RoomCard';
 import AppHeader from '../components/AppHeader';
@@ -25,10 +23,8 @@ import AuthModal from '../components/AuthModal';
 import { useAuth } from '../contexts/AuthContext';
 import { useRoomsGet, useRoomsPost } from '../hooks/useRooms';
 import { useUsersGet } from '../hooks/useUsers';
-const layoutMap = {
-  large: { xs: 12, md: 6 },
-  small: { xs: 12, md: 3 },
-};
+import * as Sentry from '@sentry/react';
+
 function DashboardPage() {
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const { data: rooms = [], isLoading } = useRoomsGet();
@@ -137,7 +133,7 @@ function DashboardPage() {
             />
           </Grid>
 
-          <Grid item xs={12} md={4} lg={3} display="flex" justifyContent="flex-end">
+          <Grid item xs={12} md={5} lg={4} display="flex" justifyContent="flex-end" alignItems="center">
             <Button
               fullWidth
               variant="contained"
@@ -154,6 +150,7 @@ function DashboardPage() {
             >
               Ou crie seu próprio 4um
             </Button>
+            <ErrorButtons /> {/* Botões para testar o Sentry e Error Boundary */}
           </Grid>
         </Grid>
 
