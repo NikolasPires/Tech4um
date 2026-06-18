@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Box, Button, Container, Grid, Snackbar, Alert } from '@mui/material';
+import { Box, Button, Container, Grid, Snackbar, Alert, Skeleton, Divider, Card, CardContent, Stack } from '@mui/material';
 import { ArrowBackIosNew } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
@@ -57,10 +57,10 @@ export default function RoomPage() {
   const { user, isLoading: authLoading, logout } = useAuth();
 
   const roomId = Number(params.roomId ?? '');
-  const { data: rooms = [] } = useRoomsGet();
-  const { data: room } = useRoom(roomId);
-  const { data: participants = [] } = useRoomParticipants(roomId);
-  const { data: messages = [] } = useRoomMessages(roomId);
+  const { data: rooms = [], isLoading: roomsLoading } = useRoomsGet();
+  const { data: room, isLoading: roomLoading } = useRoom(roomId);
+  const { data: participants = [], isLoading: participantsLoading } = useRoomParticipants(roomId);
+  const { data: messages = [], isLoading: messagesLoading } = useRoomMessages(roomId);
   const [typingUserName, setTypingUserName] = useState<string | null>(null);
   const {
     connected,
@@ -284,47 +284,148 @@ export default function RoomPage() {
 
         <Grid container spacing={4}>
           <Grid item xs={12} md={3}>
-            <RoomParticipantsPanel
-              participants={participantList}
-              onSelectRecipient={(name) => {
-                setPrivateRecipient(name);
-                setIsPrivateMode(true);
-              }}
-            />
+            {participantsLoading ? (
+              <Card
+                elevation={0}
+                sx={{
+                  borderRadius: '16px',
+                  boxShadow: '0px 14px 40px rgba(0,0,0,0.06)',
+                  height: { xs: 'auto', md: '75vh' },
+                }}
+              >
+                <CardContent sx={{ p: '24px' }}>
+                  <Stack direction="row" spacing={'16px'} alignItems="center" justifyContent="space-between" sx={{ mb: '24px' }}>
+                    <Skeleton width={120} height={24} />
+                    <Skeleton variant="circular" width={24} height={24} />
+                  </Stack>
+                  <Stack spacing={'16px'}>
+                    {[1, 2, 3, 4, 5].map((idx) => (
+                      <Stack key={idx} direction="row" alignItems="center" spacing={'16px'} sx={{ px: '16px', py: '12px' }}>
+                        <Skeleton variant="circular" width={40} height={40} />
+                        <Box sx={{ flexGrow: 1 }}>
+                          <Skeleton width="60%" height={20} />
+                          <Skeleton width="40%" height={16} sx={{ mt: 0.5 }} />
+                        </Box>
+                      </Stack>
+                    ))}
+                  </Stack>
+                </CardContent>
+              </Card>
+            ) : (
+              <RoomParticipantsPanel
+                participants={participantList}
+                onSelectRecipient={(name) => {
+                  setPrivateRecipient(name);
+                  setIsPrivateMode(true);
+                }}
+              />
+            )}
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <RoomChatPanel
-              currentUser={user?.name ?? 'Você'}
-              currentRoom={currentRoom}
-              visibleMessages={visibleMessages}
-              typingUser={typingUserName}
-              draft={draft}
-              onDraftChange={setDraft}
-              onSend={handleSend}
-              onTypingStatusChange={(isTyping) => {
-                const recipient = participantList.find((p) => p.name === privateRecipient);
-                sendTypingStatus({
-                  is_typing: isTyping,
-                  recipient_id: isPrivateMode && recipient ? recipient.user_id : null,
-                });
-              }}
-              isPrivateMode={isPrivateMode}
-              selectedRecipient={selectedRecipient}
-              onCancelPrivate={handleCancelPrivate}
-            />
+            {roomLoading || messagesLoading ? (
+              <Card
+                elevation={0}
+                sx={{
+                  borderRadius: '16px',
+                  boxShadow: '0px 14px 40px rgba(0,0,0,0.06)',
+                  height: { xs: '70vh', md: '75vh' },
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                <CardContent sx={{ p: '24px', pb: '16px', flexShrink: 0 }}>
+                  <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Skeleton width="40%" height={32} />
+                    <Skeleton width="30%" height={20} />
+                  </Stack>
+                </CardContent>
+                <Divider />
+                <Box sx={{ flexGrow: 1, px: '24px', py: '16px', display: 'flex', flexDirection: 'column' }}>
+                  <Stack spacing={'16px'} sx={{ width: '100%' }}>
+                    {[1, 2, 3].map((idx) => (
+                      <Box key={idx} sx={{ display: 'flex', gap: '16px', alignItems: 'flex-start', mt: '8px' }}>
+                        <Skeleton variant="circular" width={40} height={40} />
+                        <Box sx={{ bgcolor: 'background.paper', borderRadius: '12px', p: '16px', boxShadow: '0px 12px 24px rgba(0,0,0,0.04)', flexGrow: 1, maxWidth: '70%' }}>
+                          <Stack spacing={'4px'}>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center">
+                              <Skeleton width="40%" height={16} />
+                              <Skeleton width="15%" height={14} />
+                            </Stack>
+                            <Skeleton width="90%" height={20} />
+                            <Skeleton width="60%" height={20} sx={{ mt: 0.5 }} />
+                          </Stack>
+                        </Box>
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+                <Divider />
+                <Box sx={{ p: '16px', display: 'flex', gap: '16px', alignItems: 'center' }}>
+                  <Skeleton width="80%" height={56} sx={{ borderRadius: '12px' }} />
+                  <Skeleton variant="circular" width={48} height={48} />
+                </Box>
+              </Card>
+            ) : (
+              <>
+                <RoomChatPanel
+                  currentUser={user?.name ?? 'Você'}
+                  currentRoom={currentRoom}
+                  visibleMessages={visibleMessages}
+                  typingUser={typingUserName}
+                  draft={draft}
+                  onDraftChange={setDraft}
+                  onSend={handleSend}
+                  onTypingStatusChange={(isTyping) => {
+                    const recipient = participantList.find((p) => p.name === privateRecipient);
+                    sendTypingStatus({
+                      is_typing: isTyping,
+                      recipient_id: isPrivateMode && recipient ? recipient.user_id : null,
+                    });
+                  }}
+                  isPrivateMode={isPrivateMode}
+                  selectedRecipient={selectedRecipient}
+                  onCancelPrivate={handleCancelPrivate}
+                />
+              </>
+            )}
           </Grid>
 
           <Grid item xs={12} md={3}>
-            <RoomSidebar
-              suggestedRooms={roomsWithCreators}
-              roomId={String(roomId)}
-              onNavigate={(targetRoomId) => navigate(`/room/${targetRoomId}`)}
-              onError={(msg) => {
-                setToastSeverity('error');
-                setToastMessage(msg);
-              }}
-            />
+            {roomsLoading ? (
+              <Stack spacing={'12px'} sx={{ maxHeight: { xs: 'auto', md: '75vh' }, pr: '4px' }}>
+                {[1, 2, 3, 4].map((idx) => (
+                  <Box
+                    key={idx}
+                    sx={{
+                      borderRadius: '12px',
+                      bgcolor: 'background.paper',
+                      p: '16px',
+                      border: '1px solid rgba(0, 0, 0, 0.06)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px',
+                    }}
+                  >
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={'8px'}>
+                      <Skeleton width="60%" height={24} />
+                      <Skeleton width={48} height={20} sx={{ borderRadius: '10px' }} />
+                    </Stack>
+                    <Skeleton width="30%" height={16} sx={{ mt: 0.5 }} />
+                  </Box>
+                ))}
+              </Stack>
+            ) : (
+              <RoomSidebar
+                suggestedRooms={roomsWithCreators}
+                roomId={String(roomId)}
+                onNavigate={(targetRoomId) => navigate(`/room/${targetRoomId}`)}
+                onError={(msg) => {
+                  setToastSeverity('error');
+                  setToastMessage(msg);
+                }}
+              />
+            )}
           </Grid>
         </Grid>
       </Container>

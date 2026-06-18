@@ -17,22 +17,22 @@ def test_password_complexity():
     user_data["password"] = "Pa1"
     with pytest.raises(ValidationError) as excinfo:
         UserCreate(**user_data)
-    assert "8 characters" in str(excinfo.value) or "min_length" in str(excinfo.value)
+    assert "8 caracteres" in str(excinfo.value) or "min_length" in str(excinfo.value)
 
     # Senha sem número
     user_data["password"] = "Password"
     with pytest.raises(ValidationError) as excinfo:
         UserCreate(**user_data)
-    assert "at least one number" in str(excinfo.value)
+    assert "pelo menos um número" in str(excinfo.value)
 
     # Senha sem letra maiúscula
     user_data["password"] = "password123"
     with pytest.raises(ValidationError) as excinfo:
         UserCreate(**user_data)
-    assert "at least one uppercase letter" in str(excinfo.value)
+    assert "pelo menos uma letra maiúscula" in str(excinfo.value)
 
     # Senha sem letra minúscula
     user_data["password"] = "PASSWORD123"
     with pytest.raises(ValidationError) as excinfo:
         UserCreate(**user_data)
-    assert "at least one lowercase letter" in str(excinfo.value)
+    assert "pelo menos uma letra minúscula" in str(excinfo.value)
