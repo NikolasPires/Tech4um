@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import security
 from app.core.config import ACCESS_TOKEN_EXPIRE_MINUTES
-from app.core.deps import get_async_db, get_current_user
+from app.core.deps import get_async_db, get_current_user, oauth2_scheme
 from app.repositories.user_repository import UserRepository
 from app.schemas.user import Token
 
@@ -61,12 +61,21 @@ async def login_with_email(
 
 @router.post("/logout")
 async def logout(
+    token: str = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_async_db),
     current_user = Depends(get_current_user),
 ):
     try:
         from app.repositories.websocket_repository import ws_repository
         from app.repositories.chat_repository import ChatRepository
+        from app.core.config import ACCESS_TOKEN_EXPIRE_MINUTES
+
+        # Salvar o token na blacklist
+        await ws_repository.redis.setex(
+            f"blacklisted_token:{token}",
+            ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            "1"
+        )
 
         # Forçar a remoção do status online no Redis
         await ws_repository.redis.srem("online_users", str(current_user.id))

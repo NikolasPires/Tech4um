@@ -19,7 +19,7 @@ import {
   RoomSidebar,
 } from '../components/Room';
 import { useRoomSocket } from '../hooks/useRoomSocket';
-import { useUsersGet } from '../hooks/useUsers';
+
 const avatarColors = [
   '4E79A7', // Steel Blue
   'F28E2B', // Orange
@@ -74,7 +74,6 @@ export default function RoomPage() {
   const [draft, setDraft] = useState('');
   const [privateRecipient, setPrivateRecipient] = useState<string | null>(null);
   const [isPrivateMode, setIsPrivateMode] = useState(false);
-  const { data: users = [] } = useUsersGet();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [onlineUserIds, setOnlineUserIds] = useState<Set<number>>(new Set());
 
@@ -103,40 +102,37 @@ export default function RoomPage() {
     [participants, onlineUserIds]
   );
 
-  const roomsWithCreators = useMemo(() => {
-      return rooms.map((room) => {
-        const creator = users.find(
-          (user) => user.id === room.createdBy
-        );
-  
-        return {
-          ...room,
-          creator: creator?.name ?? `Usuário ${room.createdBy}`,
-        };
-      });
-    }, [rooms, users]);
+  const roomsWithCreators = useMemo(
+    () =>
+      rooms.map((r) => ({
+        id: r.id,
+        title: r.title,
+        creator: r.creator,
+        members: r.members,
+      })),
+    [rooms]
+  );
 
   useEffect(() => {
-  setLiveMessages(messages);
-}, [messages]);
+    setLiveMessages(messages);
+  }, [messages]);
   useEffect(() => {
     const latest =
-    socketMessages.length > 0
-      ? socketMessages[socketMessages.length - 1]
-      : undefined;
+      socketMessages.length > 0
+        ? socketMessages[socketMessages.length - 1]
+        : undefined;
 
     if (!latest) return;
 
     if (latest.event === 'user_typing') {
       if (latest.room_id !== undefined && latest.room_id !== roomId) return;
       if (latest.is_typing) {
-        // Procura o nome do participante correspondente ao user_id recebido
         const tycoon = participantList.find((p) => p.user_id === latest.user_id);
         setTypingUserName(tycoon ? tycoon.name : `Usuário ${latest.user_id}`);
       } else {
         setTypingUserName(null);
       }
-      return; // Encerra aqui para não misturar com o fluxo de novas mensagens
+      return;
     }
 
     if (latest.event === 'user_online') {
@@ -187,9 +183,6 @@ export default function RoomPage() {
       ];
     });
   }, [socketMessages, participantList]);
-
-
-
 
   const currentRoom = useMemo(
     () => ({
@@ -305,7 +298,7 @@ export default function RoomPage() {
               currentUser={user?.name ?? 'Você'}
               currentRoom={currentRoom}
               visibleMessages={visibleMessages}
-              typingUser={typingUserName} 
+              typingUser={typingUserName}
               draft={draft}
               onDraftChange={setDraft}
               onSend={handleSend}

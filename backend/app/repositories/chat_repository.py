@@ -24,10 +24,16 @@ class ChatRepository:
         self.db.add(room)
         await self.db.commit()
         await self.db.refresh(room)
+        await self.db.refresh(room, ["creator"])
         return room
 
     async def get_room_by_id(self, room_id: int) -> Room | None:
-        return await self.db.get(Room, room_id)
+        result = await self.db.execute(
+            select(Room)
+            .options(selectinload(Room.creator))
+            .filter_by(id=room_id)
+        )
+        return result.scalar_one_or_none()
 
     async def list_rooms(self, limit: int = 20, offset: int = 0):
         result = await self.db.execute(
@@ -39,6 +45,7 @@ class ChatRepository:
                 Participant,
                 Participant.room_id == Room.id,
             )
+            .options(selectinload(Room.creator))
             .group_by(Room.id)
             .order_by(Room.created_at.desc())
             .limit(limit)

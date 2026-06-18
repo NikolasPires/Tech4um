@@ -39,6 +39,7 @@ export default function CreateRoomModal({ open, onClose, onCreate }: Props) {
       id: '',
       title: title.trim(),
       createdBy: 0,
+      creator: '',
       members: 0,
       description: description.trim(),
       featured: false,

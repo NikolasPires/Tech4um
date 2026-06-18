@@ -13,6 +13,8 @@ type BackendRoom = {
   created_at: string;
   members: number;
   featured?: boolean;
+  creator_name?: string | null;
+  creator_username?: string | null;
 };
 
 const computeRoomSize = (room: Pick<RoomCardData, 'title' | 'description'>) => {
@@ -30,11 +32,13 @@ const mapRoomFromBackend = (room: BackendRoom): RoomCardData => ({
   id: String(room.id),
   title: room.name,
   createdBy: room.created_by,
+  creator: room.creator_name ?? `Usuário ${room.created_by}`,
   members: room.members ?? 0,
   description: room.description ?? '',
   featured: room.featured ?? false,
   size: computeRoomSize({ title: room.name, description: room.description ?? '' }),
 });
+
 
 const getRoomsUrl = () => `${API_BASE_URL}/chat/rooms`;
 

@@ -6,12 +6,14 @@ O **Tech4um** é um fórum tecnológico em tempo real projetado para criar um am
 ---
 
 ## 🚀 Funcionalidades e Diferenciais do Projeto
-- Login e autenticação
-- Dashboard de fóruns
-- Criação de salas
-- Chat em tempo real e Mensagens Privadas
-- Testes automatizados (Testes de integração)
-- Arquitetura Frontend que proporciona desenvolvimento ágil (Definição de Temas e Componentização)
+- Login e autenticação com JWT e controle de expiração
+- Revogação ativa de tokens JWT em logout usando **Blacklist no Redis**
+- Cadastro de usuários com validação estrita de senhas (mínimo de 8 caracteres, maiúscula, minúscula e número)
+- Dashboard de fóruns com listagem otimizada
+- Chat em tempo real e Mensagens Privadas com controle de digitação em tempo real
+- Autenticação de WebSockets segura baseada em **Tickets de uso único** com expiração de 15 segundos no Redis
+- Testes automatizados (Testes de integração e de validação de schemas)
+- Arquitetura Frontend moderna com definição de Temas, Componentização e suporte a estado de conexão em tempo real
 - Criação de hooks performáticos com Tanstack Query
 - Facilidade de Execução de Ambiente com Containers Docker
 - Arquitetura em Camadas (Mix de MVC e Clean Code)
@@ -22,6 +24,7 @@ O **Tech4um** é um fórum tecnológico em tempo real projetado para criar um am
 - **Backend:** [FastAPI](https://fastapi.tiangolo.com/) (Python 3.12)
 - **Frontend:** [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) + [Vite](https://vite.dev/) + [MUI (Material UI)](https://mui.com/)
 - **Banco de Dados:** [PostgreSQL 16](https://www.postgresql.org/)
+- **Armazenamento de Estado & Pub/Sub:** [Redis](https://redis.io/) (utilizado para controle de tickets WebSocket, cache de status online e blacklist de JWT)
 - **ORM & Migrações:** [SQLAlchemy](https://www.sqlalchemy.org/) & [Alembic](https://alembic.sqlalchemy.org/)
 - **Containerização:** [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/)
 
@@ -39,6 +42,7 @@ Antes de iniciar, certifique-se de ter instalado em sua máquina:
 - **Python** (v3.12+)
 - **Node.js** (v20+) e **npm**
 - **PostgreSQL** (v16+) instalado e rodando localmente
+- **Redis** instalado e rodando localmente
 
 ---
 
@@ -48,10 +52,10 @@ Antes de iniciar, certifique-se de ter instalado em sua máquina:
 Crie o arquivo `.env` dentro da pasta `backend` baseando-se nas variáveis abaixo:
 ```env
 DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/tech4um
+REDIS_URL=redis://redis:6379/0
 SECRET_KEY=sua_chave_secreta_super_segura_aqui
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 ```
-> ⚠️ **Nota:** No Docker, a URL do banco usa o host `db` (nome do serviço no Compose). Localmente, substitua por `localhost` ou o IP correspondente.
 
 ### Frontend (`/frontend/.env`)
 Crie o arquivo `.env` dentro da pasta `frontend`:
@@ -70,7 +74,7 @@ Na raiz do projeto, execute:
 ```bash
 docker compose up -d
 ```
-Isso iniciará o banco de dados PostgreSQL e o container unificado da aplicação.
+Isso iniciará o banco de dados PostgreSQL, o Redis e o container unificado da aplicação.
 
 ### Passo 2: Entrar no Container da Aplicação
 Para executar comandos e rodar os servidores, acesse o terminal do container da aplicação:
@@ -107,9 +111,10 @@ O frontend estará disponível em `http://localhost:3000`.
 
 Se preferir rodar a aplicação diretamente no seu host local:
 
-### Passo 1: Banco de Dados
+### Passo 1: Banco de Dados e Redis
 1. Certifique-se de que o PostgreSQL está ativo e crie um banco de dados chamado `tech4um`.
-2. Configure o arquivo `backend/.env` com a string de conexão correta (ex: `DATABASE_URL=postgresql+psycopg2://postgres:senha@localhost:5432/tech4um`).
+2. Certifique-se de que a instância do Redis está ativa na porta padrão (6379).
+3. Configure o arquivo `backend/.env` com as strings de conexões corretas (ex: `DATABASE_URL=postgresql+psycopg2://postgres:senha@localhost:5432/tech4um` e `REDIS_URL=redis://localhost:6379/0`).
 
 ### Passo 2: Configurar e Rodar o Backend
 1. Navegue até a pasta `backend`:
@@ -164,15 +169,11 @@ Sempre execute os comandos do Alembic de dentro da pasta `backend`:
 
 ## 🧪 Testes Automatizados
 
-O projeto conta com testes de integração automatizados para garantir a estabilidade e a corretude das regras de negócio do sistema.
+O projeto conta com testes de integração e testes de validação de schemas automatizados para garantir a estabilidade e a segurança do sistema.
 
-### O que o teste valida?
-O arquivo de teste [test_featured.py](file:///home/nikolas/Tech4um/backend/tests/test_featured.py) valida ponta a ponta a funcionalidade do algoritmo de "Tópico em Destaque":
-- Cria múltiplos fóruns/salas temporárias na base de dados de testes.
-- Distribui o volume de mensagens de maneira desigual entre as salas nas últimas 24 horas.
-- Faz requisições HTTP reais de listagem de salas contra o app FastAPI usando `httpx.AsyncClient`.
-- Garante que a API responde com a flag `featured: true` exatamente para as **3 salas mais ativas**.
-- Confirma que as salas menos ativas ou recém-criadas permanecem sem destaque (`featured: false`).
+### O que os testes validam?
+1. **Destaque de Salas ([test_featured.py](file:///home/nikolas/Tech4um/backend/tests/test_featured.py)):** Valida o algoritmo de "Tópicos em Destaque", verificando se as 3 salas com maior número de mensagens nas últimas 24h são marcadas corretamente como destaque pela API.
+2. **Complexidade de Senhas ([test_auth_password_blacklist.py](file:///home/nikolas/Tech4um/backend/tests/test_auth_password_blacklist.py)):** Valida as regras de validação do Pydantic para o cadastro de novos usuários, assegurando a rejeição de senhas curtas ou fracas (sem letras maiúsculas, minúsculas ou números).
 
 ### Como executar os testes?
 
@@ -194,4 +195,7 @@ PYTHONPATH=. pytest
 ## 🧑‍💻 Notas para o Desenvolvedor
 
 - **Endpoints da API:** A documentação interativa Swagger está disponível em `http://localhost:8000/docs`.
-- **Serviço de WebSocket:** As conexões em tempo real das salas de chat utilizam a rota `/chat/ws/rooms/{room_id}?user_id={user_id}`.
+- **Rotas Protegidas:** As rotas de listagem e dados de usuários (`GET /users` e `GET /users/{user_id}`) e histórico de mensagens exigem autenticação do cabeçalho Bearer Token JWT. Acesso anônimo ou sem participação na sala será bloqueado.
+- **Serviço de WebSocket:** As conexões em tempo real utilizam tickets de uso único armazenados no Redis (expiram em 15 segundos). As rotas de conexão são:
+  - `/chat/ws/rooms/{room_id}/{ticket}`: Para chats e eventos internos das salas.
+  - `/chat/ws/notifications/{ticket}`: Para o canal de notificações globais em tempo real.

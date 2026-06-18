@@ -26,11 +26,9 @@ export default function AuthModal({ open, onClose }: AuthModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Login form
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
 
-  // Register form
   const [registerName, setRegisterName] = useState('');
   const [registerUsername, setRegisterUsername] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
@@ -78,6 +76,7 @@ export default function AuthModal({ open, onClose }: AuthModalProps) {
       setRegisterPasswordConfirm('');
       onClose();
     } catch (err: any) {
+      console.log(err)
       setError(err.message || 'Erro ao criar conta');
     } finally {
       setIsLoading(false);
@@ -96,6 +95,8 @@ export default function AuthModal({ open, onClose }: AuthModalProps) {
     setRegisterPasswordConfirm('');
     onClose();
   };
+
+  console.log(error)
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">

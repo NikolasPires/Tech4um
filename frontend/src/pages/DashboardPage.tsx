@@ -24,7 +24,6 @@ import CreateRoomModal from '../components/CreateRoomModal';
 import AuthModal from '../components/AuthModal';
 import { useAuth } from '../contexts/AuthContext';
 import { useRoomsGet, useRoomsPost } from '../hooks/useRooms';
-import { useUsersGet } from '../hooks/useUsers';
 const layoutMap = {
   large: { xs: 12, md: 6 },
   small: { xs: 12, md: 3 },
@@ -32,7 +31,6 @@ const layoutMap = {
 function DashboardPage() {
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const { data: rooms = [], isLoading } = useRoomsGet();
-  const { data: users = [] } = useUsersGet();
   const createRoomMutation = useRoomsPost();
 
   const [query, setQuery] = useState('');
@@ -43,15 +41,8 @@ function DashboardPage() {
 
   const skeletonItems = useMemo<number[]>(() => [1, 2, 3, 4], []);
 
-  const roomsWithCreators = useMemo(() => {
-    return rooms.map((room) => {
-      const creator = users.find((u) => u.id === room.createdBy);
-      return {
-        ...room,
-        creator: creator?.name ?? `Usuário ${room.createdBy}`,
-      };
-    });
-  }, [rooms, users]);
+  const roomsWithCreators = rooms;
+
 
   const handleCreate = (room: any) => {
     if (!isAuthenticated) {
@@ -80,7 +71,7 @@ function DashboardPage() {
       return (
         r.title.toLowerCase().includes(q) ||
         r.description.toLowerCase().includes(q) ||
-        r.creator.toLowerCase().includes(q)
+        (r.creator?.toLowerCase().includes(q) ?? false)
       );
     });
   }, [roomsWithCreators, query]);

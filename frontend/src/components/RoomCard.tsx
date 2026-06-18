@@ -8,7 +8,7 @@ export type RoomCardData = {
   id: string;
   title: string;
   createdBy: number;
-  creator?: string;
+  creator: string;
   members: number;
   description: string;
   featured: boolean;
@@ -49,8 +49,9 @@ export default function RoomCard({ room, onAuthRequired }: { room: RoomCardData;
       sx={{
         cursor: 'pointer',
         backgroundColor: theme.palette.background.paper,
-        borderRadius: '24px', // Cantos mais arredondados e cleans como na ref
-        boxShadow: '0px 14px 40px rgba(0, 0, 0, 0.03)', // Sombra mais sutil
+        borderRadius: '24px',
+        boxShadow: '0px 10px 10px rgba(0, 0, 0, 0.03)',
+        border: '1px solid rgba(226, 232, 240, 0.8)',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
         display: 'flex',
         flexDirection: 'column',
@@ -63,7 +64,7 @@ export default function RoomCard({ room, onAuthRequired }: { room: RoomCardData;
     >
       <CardContent
         sx={{
-          p: 4, // Padding interno generoso para um visual mais clean
+          p: 4, 
           pb: '24px !important',
           display: 'flex',
           flexDirection: 'column',
@@ -83,7 +84,7 @@ export default function RoomCard({ room, onAuthRequired }: { room: RoomCardData;
             <Typography
               variant="caption"
               sx={{
-                color: '#ff6b00', // Laranja de destaque da imagem de referência
+                color: '#ff6b00',
                 fontWeight: 800,
                 mb: 1,
                 display: 'block',

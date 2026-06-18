@@ -7,18 +7,14 @@ from fastapi import (
     HTTPException,
     Query,
     WebSocket,
-    WebSocketDisconnect,
     status,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal
 from app.core.deps import get_async_db, get_current_user
-from app.core.security import decode_access_token
-from app.models.user import User
-from sqlalchemy import select
+
 from app.controllers.chat_controller import ChatController
-from app.repositories.chat_repository import ChatRepository
 from app.schemas.chat import (
     MessageCreate,
     MessageResponse,
@@ -29,7 +25,6 @@ from app.schemas.chat import (
     RoomParticipantResponse,
     RoomResponse,
 )
-import redis.asyncio as aioredis
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
@@ -185,6 +180,13 @@ async def add_participant(
             detail="Only the authenticated user can add themselves as a participant.",
         )
 
+    room = await ChatController(db).repository.get_room_by_id(room_id)
+    if room is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Room not found",
+        )
+
     return await ChatController(db).add_participant(
         room_id,
         participant_create.user_id,
@@ -208,6 +210,13 @@ async def create_message(
             detail="Room ID mismatch between path and payload.",
         )
 
+    participant = await ChatController(db).repository.get_participant(room_id, current_user.id)
+    if not participant:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="O usuário não é participante desta sala."
+        )
+
     return await ChatController(db).create_message(
         message_create,
         current_user.id,
@@ -225,6 +234,13 @@ async def get_room_messages(
     db: AsyncSession = Depends(get_async_db),
     current_user=Depends(get_current_user),
 ):
+    participant = await ChatController(db).repository.get_participant(room_id, current_user.id)
+    if not participant:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="O usuário não é participante desta sala."
+        )
+
     messages = await ChatController(db).get_room_messages(
         room_id,
         current_user.id,

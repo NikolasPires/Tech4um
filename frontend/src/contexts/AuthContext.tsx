@@ -124,8 +124,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     if (!response.ok) {
       const errorData = await response.json();
-
-      throw new Error(errorData.detail || 'Registration failed');
+      console.log(errorData);
+      throw new Error(errorData.detail[0].msg || 'Registration failed');
     }
 
     return login(email, password);

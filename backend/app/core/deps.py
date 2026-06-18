@@ -21,6 +21,10 @@ async def get_current_user(
     db: AsyncSession = Depends(get_async_db),
 ):
     try:
+        from app.repositories.websocket_repository import ws_repository
+        is_blacklisted = await ws_repository.redis.get(f"blacklisted_token:{token}")
+        if is_blacklisted:
+            raise Exception("Token is blacklisted")
         username = security.decode_access_token(token)
     except Exception:
         raise HTTPException(

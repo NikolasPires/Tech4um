@@ -16,3 +16,5 @@ class Room(Base):
 
     participants = relationship("Participant", back_populates="room", cascade="all, delete-orphan")
     messages = relationship("RoomMessage", back_populates="room", cascade="all, delete-orphan")
+    creator = relationship("User")
+

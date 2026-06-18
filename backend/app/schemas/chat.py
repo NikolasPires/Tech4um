@@ -16,10 +16,13 @@ class RoomResponse(BaseModel):
     created_by: int
     created_at: datetime
     featured: bool = False
+    creator_name: Optional[str] = None
+    creator_username: Optional[str] = None
 
     model_config = {
         "from_attributes": True,
     }
+
 
 class RoomListResponse(RoomResponse):
     members: int

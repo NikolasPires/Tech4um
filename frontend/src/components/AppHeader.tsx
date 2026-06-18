@@ -35,11 +35,11 @@ export default function AppHeader({ title, subtitle, user, isLoading, onLogin, o
   };
 
   return (
-    <AppBar position="static" color="transparent" elevation={0} sx={{ mb: 4, py: 2, boxShadow: '0px 2px 4px rgba(0,0,0,0.1)' }}>
+    <AppBar position="static" color="transparent" elevation={0} sx={{ mb: 4, py: 2, boxShadow: '0px 2px 4px rgba(0,0,0,0.1)', backgroundColor: 'background.paper'  }}>
       <Container maxWidth="xl">
         <Toolbar disableGutters sx={{ justifyContent: 'space-between', px: { xs: 0, md: 2 } }}>
           <Stack direction="row" spacing={1} alignItems="flex-end">
-            <img src="/Logo.png" alt="Logo" style={{ height: '44px', width: '92px' }} />
+            <img src="/Logo.png" alt="Logo" style={{ height: '44px', width: 'auto' }} />
             <Typography variant="labelLarge" sx={{ color: 'gray.main', fontWeight: 300 }}>
               Seu fórum sobre tecnologia!
             </Typography>

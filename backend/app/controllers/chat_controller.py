@@ -33,6 +33,8 @@ class ChatController:
             "created_by": room.created_by,
             "created_at": room.created_at,
             "featured": room.id in featured_ids,
+            "creator_name": room.creator.name if room.creator else None,
+            "creator_username": room.creator.username if room.creator else None,
         }
 
     async def list_room_participants(self, room_id: int):
@@ -71,6 +73,8 @@ class ChatController:
                 "created_at": room.created_at,
                 "members": members,
                 "featured": room.id in featured_ids,
+                "creator_name": room.creator.name if room.creator else None,
+                "creator_username": room.creator.username if room.creator else None,
             }
             for room, members in rooms
         ]

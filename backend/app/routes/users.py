@@ -26,7 +26,10 @@ async def read_current_user(current_user=Depends(get_current_user)):
 
 
 @router.get("", response_model=list[UserRead])
-async def list_users(db: AsyncSession = Depends(get_async_db)):
+async def list_users(
+    db: AsyncSession = Depends(get_async_db),
+    current_user=Depends(get_current_user),
+):
     return await UserController(db).list_users()
 
 
@@ -34,6 +37,7 @@ async def list_users(db: AsyncSession = Depends(get_async_db)):
 async def read_user(
     user_id: int,
     db: AsyncSession = Depends(get_async_db),
+    current_user=Depends(get_current_user),
 ):
     user = await UserController(db).get_user_by_id(user_id)
     if user is None:
