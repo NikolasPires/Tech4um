@@ -17,6 +17,7 @@ O **Tech4um** é um fórum tecnológico em tempo real projetado para criar um am
 - Criação de hooks performáticos com Tanstack Query
 - Facilidade de Execução de Ambiente com Containers Docker
 - Arquitetura em Camadas (Mix de MVC e Clean Code)
+- Monitoramento de erros e desempenho com Sentry
 
 
 ## 🏗️ Arquitetura e Tecnologias
